@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/movie.dart';
+import '../utils/colors.dart';
 
-class MovieCard extends StatelessWidget {
+class MovieCard extends StatefulWidget {
   final Movie movie;
   final String imageUrl;
   final VoidCallback onTap;
@@ -14,47 +15,79 @@ class MovieCard extends StatelessWidget {
   });
 
   @override
+  State<MovieCard> createState() => _MovieCardState();
+}
+
+class _MovieCardState extends State<MovieCard> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 150,
-        margin: const EdgeInsets.only(right: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Image.network(
-                imageUrl,
-                width: 150,
-                height: 225,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 150,
-                    height: 225,
-                    color: Colors.grey[900],
-                    child: const Icon(
-                      Icons.movie,
-                      color: Colors.grey,
-                      size: 50,
-                    ),
-                  );
-                },
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          width: 180,
+          margin: const EdgeInsets.only(right: 12),
+          transform: Matrix4.identity()..scale(_isHovered ? 1.08 : 1.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: _isHovered
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.5),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    widget.imageUrl,
+                    width: 180,
+                    height: 270,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 180,
+                        height: 270,
+                        color: AppColors.surface,
+                        child: const Icon(
+                          Icons.movie,
+                          color: AppColors.textSecondary,
+                          size: 60,
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              movie.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  widget.movie.title,
+                  style: TextStyle(
+                    color: _isHovered ? AppColors.textPrimary : AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

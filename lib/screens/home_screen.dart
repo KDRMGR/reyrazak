@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/movie_provider.dart';
+import '../providers/content_provider.dart';
 import '../models/movie.dart';
 import '../widgets/movie_row.dart';
-import 'player_screen.dart';
+import '../widgets/hero_banner.dart';
+import '../utils/colors.dart';
+import 'video_player_screen.dart';
+import 'detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,161 +20,127 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      Provider.of<MovieProvider>(context, listen: false).fetchMovies();
+      Provider.of<ContentProvider>(context, listen: false).fetchAllContent();
     });
   }
 
-  void _playMovie(Movie movie, MovieProvider provider) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PlayerScreen(
-          movie: movie,
-          streamUrl: provider.getStreamUrl(movie.id),
+  void _playContent(Movie content, ContentProvider provider, {bool isSeries = false}) {
+    if (isSeries) {
+      // Navigate to detail screen for TV shows
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DetailScreen(
+            content: content,
+            imageUrl: provider.getImageUrl(content.id),
+            backdropUrl: provider.getBackdropUrl(content.id),
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      // Navigate directly to player for movies
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VideoPlayerScreen(
+            movie: content,
+            streamUrl: provider.getStreamUrl(content.id),
+          ),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
-          'REYRAZAK',
-          style: TextStyle(
-            color: Colors.red,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        automaticallyImplyLeading: false,
-      ),
-      body: Consumer<MovieProvider>(
-        builder: (context, movieProvider, child) {
-          if (movieProvider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.red),
-            );
-          }
+    return Consumer<ContentProvider>(
+      builder: (context, contentProvider, child) {
+        if (contentProvider.isLoading) {
+          return Container(
+            color: AppColors.background,
+            child: const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          );
+        }
 
-          if (movieProvider.errorMessage != null) {
-            return Center(
+        if (contentProvider.errorMessage != null) {
+          return Container(
+            color: AppColors.background,
+            child: Center(
               child: Text(
-                movieProvider.errorMessage!,
-                style: const TextStyle(color: Colors.red),
+                contentProvider.errorMessage!,
+                style: const TextStyle(color: AppColors.primary),
               ),
-            );
-          }
+            ),
+          );
+        }
 
-          if (movieProvider.movies.isEmpty) {
-            return const Center(
+        if (contentProvider.allContent.isEmpty) {
+          return Container(
+            color: AppColors.background,
+            child: const Center(
               child: Text(
-                'No movies available',
-                style: TextStyle(color: Colors.white, fontSize: 18),
+                'No content available',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
               ),
-            );
-          }
+            ),
+          );
+        }
 
-          final movies = movieProvider.movies;
-          final bannerMovie = movies.isNotEmpty ? movies.first : null;
+        final allContent = contentProvider.allContent;
+        final movies = contentProvider.movies;
+        final shows = contentProvider.shows;
+        final bannerContent = allContent.isNotEmpty ? allContent.first : null;
 
-          return SingleChildScrollView(
+        return Container(
+          color: AppColors.background,
+          child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (bannerMovie != null)
-                  GestureDetector(
-                    onTap: () => _playMovie(bannerMovie, movieProvider),
-                    child: Stack(
-                      children: [
-                        Image.network(
-                          movieProvider.getImageUrl(bannerMovie.id),
-                          width: double.infinity,
-                          height: 400,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: double.infinity,
-                              height: 400,
-                              color: Colors.grey[900],
-                              child: const Icon(
-                                Icons.movie,
-                                color: Colors.grey,
-                                size: 100,
-                              ),
-                            );
-                          },
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  Colors.black,
-                                  Colors.black.withOpacity(0.0),
-                                ],
-                              ),
-                            ),
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  bannerMovie.title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton.icon(
-                                  onPressed: () => _playMovie(bannerMovie, movieProvider),
-                                  icon: const Icon(Icons.play_arrow),
-                                  label: const Text('Play'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: Colors.black,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 32,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                if (bannerContent != null)
+                  HeroBanner(
+                    movie: bannerContent,
+                    backdropUrl: contentProvider.getBackdropUrl(bannerContent.id),
+                    onPlay: () => _playContent(bannerContent, contentProvider),
+                    onInfo: () {},
                   ),
                 const SizedBox(height: 24),
-                MovieRow(
-                  title: 'All Movies',
-                  movies: movies,
-                  getImageUrl: movieProvider.getImageUrl,
-                  onMovieTap: (movie) => _playMovie(movie, movieProvider),
-                ),
-                const SizedBox(height: 24),
-                if (movies.length > 10)
+                if (movies.isNotEmpty)
                   MovieRow(
-                    title: 'Continue Watching',
-                    movies: movies.sublist(0, 10),
-                    getImageUrl: movieProvider.getImageUrl,
-                    onMovieTap: (movie) => _playMovie(movie, movieProvider),
+                    title: 'Movies',
+                    movies: movies,
+                    getImageUrl: contentProvider.getImageUrl,
+                    onMovieTap: (movie) => _playContent(movie, contentProvider),
                   ),
+                if (shows.isNotEmpty)
+                  MovieRow(
+                    title: 'TV Shows',
+                    movies: shows,
+                    getImageUrl: contentProvider.getImageUrl,
+                    onMovieTap: (show) => _playContent(show, contentProvider, isSeries: true),
+                  ),
+                if (allContent.length > 10)
+                  MovieRow(
+                    title: 'Trending Now',
+                    movies: allContent.sublist(0, 10),
+                    getImageUrl: contentProvider.getImageUrl,
+                    onMovieTap: (content) => _playContent(content, contentProvider),
+                  ),
+                if (allContent.length > 20)
+                  MovieRow(
+                    title: 'Popular',
+                    movies: allContent.sublist(10, 20),
+                    getImageUrl: contentProvider.getImageUrl,
+                    onMovieTap: (content) => _playContent(content, contentProvider),
+                  ),
+                const SizedBox(height: 40),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

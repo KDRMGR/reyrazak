@@ -35,6 +35,10 @@ class MovieProvider extends ChangeNotifier {
     return _apiService.getImageUrl(movieId);
   }
 
+  String getBackdropUrl(String movieId) {
+    return _apiService.getBackdropUrl(movieId);
+  }
+
   String getStreamUrl(String movieId) {
     return _apiService.getStreamUrl(movieId);
   }

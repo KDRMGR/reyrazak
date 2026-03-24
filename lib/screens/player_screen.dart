@@ -3,6 +3,7 @@ import 'package:video_player/video_player.dart';
 import 'package:provider/provider.dart';
 import '../models/movie.dart';
 import '../services/auth_service.dart';
+import '../services/api_service.dart';
 
 class PlayerScreen extends StatefulWidget {
   final Movie movie;
@@ -23,6 +24,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _isInitialized = false;
   bool _hasError = false;
   String? _errorMessage;
+  int _retryAttempt = 0;
 
   @override
   void initState() {
@@ -35,25 +37,88 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final token = authService.apiService.accessToken;
 
     try {
+      // Use the stream URL with embedded token
+      final streamUrlWithToken = widget.streamUrl;
+
+      print('Initializing player with URL: $streamUrlWithToken');
+      print('Attempt: ${_retryAttempt + 1}');
+
       _controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.streamUrl),
+        Uri.parse(streamUrlWithToken),
         httpHeaders: {
           'X-Emby-Authorization': 'MediaBrowser Token=$token',
+          'Accept': '*/*',
+          'Accept-Encoding': 'identity',
+          'Range': 'bytes=0-',
         },
+        videoPlayerOptions: VideoPlayerOptions(
+          allowBackgroundPlayback: false,
+          mixWithOthers: false,
+        ),
       );
 
       await _controller.initialize();
       if (mounted) {
         setState(() {
           _isInitialized = true;
+          _hasError = false;
         });
         _controller.play();
       }
     } catch (e) {
+      print('Video player initialization error: $e');
+
+      // Try alternative streaming methods
+      if (_retryAttempt == 0 && mounted) {
+        print('Retrying with direct stream URL...');
+        _retryAttempt++;
+        await _tryDirectStream();
+      } else if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'Unable to play video. The server may not support this format or the file may be corrupted.\n\nTechnical details: ${e.toString()}';
+        });
+      }
+    }
+  }
+
+  Future<void> _tryDirectStream() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final token = authService.apiService.accessToken;
+    final movieId = widget.movie.id;
+
+    try {
+      // Try with static streaming
+      final directUrl = '${ApiService.baseUrl}/Videos/$movieId/stream?Static=true&MediaSourceId=$movieId&api_key=$token';
+
+      print('Trying direct stream URL: $directUrl');
+
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(directUrl),
+        httpHeaders: {
+          'X-Emby-Authorization': 'MediaBrowser Token=$token',
+          'Accept': '*/*',
+        },
+        videoPlayerOptions: VideoPlayerOptions(
+          allowBackgroundPlayback: false,
+          mixWithOthers: false,
+        ),
+      );
+
+      await _controller.initialize();
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+          _hasError = false;
+        });
+        _controller.play();
+      }
+    } catch (e) {
+      print('Direct stream also failed: $e');
       if (mounted) {
         setState(() {
           _hasError = true;
-          _errorMessage = e.toString();
+          _errorMessage = 'Unable to play video. Please try again later or contact support.\n\nError: ${e.toString()}';
         });
       }
     }

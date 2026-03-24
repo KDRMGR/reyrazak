@@ -37,6 +37,8 @@ dependencies:
   provider: ^6.1.2
   http: ^1.2.0
   video_player: ^2.8.2
+  shared_preferences: ^2.2.2
+  chewie: ^1.7.5
 
 dev_dependencies:
   flutter_test:
