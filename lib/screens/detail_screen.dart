@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/movie.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
-import '../utils/colors.dart';
+import 'package:reyrazak/config/app_config.dart';
 import 'video_player_screen.dart';
 
 class DetailScreen extends StatefulWidget {
@@ -89,13 +89,13 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: ThemeConfig.background,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 400,
             pinned: true,
-            backgroundColor: AppColors.background,
+            backgroundColor: ThemeConfig.background,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -104,7 +104,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     widget.backdropUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return Container(color: AppColors.surface);
+                      return Container(color: ThemeConfig.surface);
                     },
                   ),
                   Container(
@@ -114,8 +114,8 @@ class _DetailScreenState extends State<DetailScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          AppColors.background.withOpacity(0.7),
-                          AppColors.background,
+                          ThemeConfig.background.withOpacity(0.7),
+                          ThemeConfig.background,
                         ],
                       ),
                     ),
@@ -133,7 +133,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   Text(
                     widget.content.title,
                     style: const TextStyle(
-                      color: AppColors.textPrimary,
+                      color: ThemeConfig.textPrimary,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
@@ -144,7 +144,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.all(32.0),
-                        child: CircularProgressIndicator(color: AppColors.primary),
+                        child: CircularProgressIndicator(color: ThemeConfig.primary),
                       ),
                     )
                   else if (_errorMessage != null)
@@ -153,7 +153,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         padding: const EdgeInsets.all(32.0),
                         child: Text(
                           _errorMessage!,
-                          style: const TextStyle(color: AppColors.primary),
+                          style: const TextStyle(color: ThemeConfig.primary),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -164,7 +164,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         padding: EdgeInsets.all(32.0),
                         child: Text(
                           'No seasons available',
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(color: ThemeConfig.textSecondary),
                         ),
                       ),
                     )
@@ -173,7 +173,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     const Text(
                       'Seasons',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: ThemeConfig.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -204,8 +204,8 @@ class _DetailScreenState extends State<DetailScreen> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.surface,
+                                    ? ThemeConfig.primary
+                                    : ThemeConfig.surface,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Center(
@@ -213,8 +213,8 @@ class _DetailScreenState extends State<DetailScreen> {
                                     season['Name'] ?? 'Season ${index + 1}',
                                     style: TextStyle(
                                       color: isSelected
-                                        ? AppColors.textPrimary
-                                        : AppColors.textSecondary,
+                                        ? ThemeConfig.textPrimary
+                                        : ThemeConfig.textSecondary,
                                       fontWeight: isSelected
                                         ? FontWeight.bold
                                         : FontWeight.normal,
@@ -234,7 +234,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       const Text(
                         'Episodes',
                         style: TextStyle(
-                          color: AppColors.textPrimary,
+                          color: ThemeConfig.textPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -261,7 +261,7 @@ class _DetailScreenState extends State<DetailScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: ThemeConfig.primary),
         ),
       );
     }
@@ -272,7 +272,7 @@ class _DetailScreenState extends State<DetailScreen> {
           padding: EdgeInsets.all(32.0),
           child: Text(
             'No episodes available',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: ThemeConfig.textSecondary),
           ),
         ),
       );
@@ -296,7 +296,7 @@ class _DetailScreenState extends State<DetailScreen> {
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: ThemeConfig.surface,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -307,7 +307,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   width: 150,
                   height: 90,
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: ThemeConfig.background,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(8),
                       bottomLeft: Radius.circular(8),
@@ -323,7 +323,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           width: 150,
                           height: 90,
                           errorBuilder: (context, error, stackTrace) {
-                            return Container(color: AppColors.background);
+                            return Container(color: ThemeConfig.background);
                           },
                         ),
                       Container(
@@ -356,7 +356,7 @@ class _DetailScreenState extends State<DetailScreen> {
                             Text(
                               '$episodeNumber.',
                               style: const TextStyle(
-                                color: AppColors.textSecondary,
+                                color: ThemeConfig.textSecondary,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -366,7 +366,7 @@ class _DetailScreenState extends State<DetailScreen> {
                               child: Text(
                                 episodeName,
                                 style: const TextStyle(
-                                  color: AppColors.textPrimary,
+                                  color: ThemeConfig.textPrimary,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -381,7 +381,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           Text(
                             runtime,
                             style: const TextStyle(
-                              color: AppColors.textSecondary,
+                              color: ThemeConfig.textSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -391,7 +391,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           Text(
                             overview,
                             style: const TextStyle(
-                              color: AppColors.textSecondary,
+                              color: ThemeConfig.textSecondary,
                               fontSize: 14,
                             ),
                             maxLines: 2,

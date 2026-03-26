@@ -1,8 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:reyrazak/config/app_config.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://media.aplayworld.in';
+  static String get baseUrl => ApiConfig.baseUrl;
+  static final Uri baseUri = () {
+    assert(baseUrl == baseUrl.trim());
+    assert(!baseUrl.contains('`'));
+    final uri = Uri.parse(baseUrl);
+    assert(uri.scheme == 'https');
+    return uri;
+  }();
 
   String? _accessToken;
 
@@ -13,25 +21,17 @@ class ApiService {
   String? get accessToken => _accessToken;
 
   Map<String, String> _getHeaders() {
-    final headers = {
-      'Content-Type': 'application/json',
-    };
-
-    if (_accessToken != null) {
-      headers['X-Emby-Authorization'] = 'MediaBrowser Token=$_accessToken';
-    }
-
-    return headers;
+    return ApiConfig.authHeaders(_accessToken);
   }
 
   Future<Map<String, dynamic>> authenticateByName(String username, String password) async {
-    final url = Uri.parse('$baseUrl/Users/AuthenticateByName');
+    final url = Uri.parse(ApiConfig.fullUrl(ApiConfig.authEndpoint));
 
     final response = await http.post(
       url,
       headers: {
         'Content-Type': 'application/json',
-        'X-Emby-Authorization': 'MediaBrowser Client="FlutterApp", Device="Web", DeviceId="device123", Version="1.0"',
+        'X-Emby-Authorization': ApiConfig.embyAuthHeader,
       },
       body: jsonEncode({
         'Username': username,
@@ -53,7 +53,7 @@ class ApiService {
   }
 
   Future<List<dynamic>> fetchMovies() async {
-    final url = Uri.parse('$baseUrl/Items?IncludeItemTypes=Movie&Recursive=true');
+    final url = Uri.parse(ApiConfig.fullUrl(ApiConfig.moviesEndpoint));
 
     print('Fetching movies with token: $_accessToken');
     print('Headers: ${_getHeaders()}');
@@ -75,7 +75,7 @@ class ApiService {
   }
 
   Future<List<dynamic>> fetchShows() async {
-    final url = Uri.parse('$baseUrl/Items?IncludeItemTypes=Series&Recursive=true');
+    final url = Uri.parse(ApiConfig.fullUrl(ApiConfig.seriesEndpoint));
 
     print('Fetching shows with token: $_accessToken');
 
@@ -95,7 +95,7 @@ class ApiService {
   }
 
   Future<List<dynamic>> fetchAllContent() async {
-    final url = Uri.parse('$baseUrl/Items?IncludeItemTypes=Movie,Series&Recursive=true');
+    final url = Uri.parse(ApiConfig.fullUrl(ApiConfig.allContentEndpoint));
 
     print('Fetching all content with token: $_accessToken');
 
@@ -115,32 +115,32 @@ class ApiService {
   }
 
   String getImageUrl(String itemId) {
-    return '$baseUrl/Items/$itemId/Images/Primary';
+    return ApiConfig.fullUrl(ApiConfig.primaryImageEndpoint(itemId));
   }
 
   String getBackdropUrl(String itemId) {
-    return '$baseUrl/Items/$itemId/Images/Backdrop';
+    return ApiConfig.fullUrl(ApiConfig.backdropImageEndpoint(itemId));
   }
 
   String getStreamUrl(String itemId) {
     // Use multiple streaming options for better compatibility
     // Try Direct Play URL which works better with Flutter video player
-    return '$baseUrl/Items/$itemId/Download?api_key=$_accessToken';
+    return ApiConfig.fullUrl(ApiConfig.downloadEndpoint(itemId, _accessToken!));
   }
 
   String getDirectStreamUrl(String itemId, String? mediaSourceId) {
     // Alternative: Direct stream URL with media source
     final source = mediaSourceId ?? itemId;
-    return '$baseUrl/Videos/$itemId/stream?Static=true&MediaSourceId=$source&api_key=$_accessToken';
+    return ApiConfig.fullUrl(ApiConfig.staticStreamEndpoint(itemId, source, _accessToken!));
   }
 
   String getTranscodedStreamUrl(String itemId) {
     // For transcoding support (fallback)
-    return '$baseUrl/Videos/$itemId/master.m3u8?VideoCodec=h264&AudioCodec=aac&api_key=$_accessToken';
+    return ApiConfig.fullUrl(ApiConfig.hlsStreamEndpoint(itemId, _accessToken!));
   }
 
   Future<List<dynamic>> fetchSeasons(String seriesId) async {
-    final url = Uri.parse('$baseUrl/Shows/$seriesId/Seasons');
+    final url = Uri.parse(ApiConfig.fullUrl(ApiConfig.seasonsEndpoint(seriesId)));
 
     print('Fetching seasons for series: $seriesId');
 
@@ -160,7 +160,7 @@ class ApiService {
   }
 
   Future<List<dynamic>> fetchEpisodes(String seasonId) async {
-    final url = Uri.parse('$baseUrl/Items?ParentId=$seasonId');
+    final url = Uri.parse(ApiConfig.fullUrl(ApiConfig.episodesEndpoint(seasonId)));
 
     print('Fetching episodes for season: $seasonId');
 

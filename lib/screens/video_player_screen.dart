@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 import 'package:provider/provider.dart';
+import 'package:reyrazak/config/app_config.dart';
 import '../models/movie.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
@@ -33,22 +34,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   void initState() {
     super.initState();
     _initializePlayer();
-    // Force landscape orientation for video playback
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    // Hide system UI for immersive experience
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // Force landscape orientation for video playback (if configured)
+    if (MediaConfig.forceLandscapeOnPlay) {
+      SystemChrome.setPreferredOrientations(AppConstants.landscapeOrientations);
+    }
+    // Hide system UI for immersive experience (if configured)
+    if (MediaConfig.useImmersiveMode) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    }
   }
 
   @override
   void dispose() {
-    // Restore portrait orientation
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    // Restore portrait orientation (if configured)
+    if (MediaConfig.restorePortraitOnExit) {
+      SystemChrome.setPreferredOrientations(AppConstants.preferredOrientations);
+    }
     // Restore system UI
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual,
@@ -80,22 +81,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       if (mounted) {
         _chewieController = ChewieController(
           videoPlayerController: _videoPlayerController,
-          autoPlay: true,
-          looping: false,
-          allowFullScreen: true,
-          allowMuting: true,
-          showControls: true,
+          autoPlay: MediaConfig.autoPlay,
+          looping: MediaConfig.looping,
+          allowFullScreen: MediaConfig.allowFullScreen,
+          allowMuting: MediaConfig.allowMuting,
+          showControls: MediaConfig.showControls,
           materialProgressColors: ChewieProgressColors(
-            playedColor: Colors.red,
-            handleColor: Colors.red,
-            backgroundColor: Colors.grey,
-            bufferedColor: Colors.white24,
+            playedColor: MediaConfig.playedColor,
+            handleColor: MediaConfig.handleColor,
+            backgroundColor: MediaConfig.bufferedColor,
+            bufferedColor: MediaConfig.bufferedColor.withOpacity(0.3),
           ),
           placeholder: Container(
-            color: Colors.black,
-            child: const Center(
+            color: ThemeConfig.background,
+            child: Center(
               child: CircularProgressIndicator(
-                color: Colors.red,
+                color: ThemeConfig.primary,
               ),
             ),
           ),
@@ -104,22 +105,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.error_outline,
-                    color: Colors.red,
-                    size: 64,
+                    color: ThemeConfig.error,
+                    size: ThemeConfig.iconSizeXL,
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Error loading video',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  SizedBox(height: ThemeConfig.spacingM),
+                  Text(
+                    MediaConfig.videoLoadErrorMessage,
+                    style: ThemeConfig.bodyLarge,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: ThemeConfig.spacingS),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: EdgeInsets.all(ThemeConfig.spacingM),
                     child: Text(
                       errorMessage,
-                      style: const TextStyle(color: Colors.grey),
+                      style: ThemeConfig.bodySmall,
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -178,15 +179,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       if (mounted) {
         _chewieController = ChewieController(
           videoPlayerController: _videoPlayerController,
-          autoPlay: true,
-          looping: false,
-          allowFullScreen: true,
-          showControls: true,
+          autoPlay: MediaConfig.autoPlay,
+          looping: MediaConfig.looping,
+          allowFullScreen: MediaConfig.allowFullScreen,
+          showControls: MediaConfig.showControls,
           materialProgressColors: ChewieProgressColors(
-            playedColor: Colors.red,
-            handleColor: Colors.red,
-            backgroundColor: Colors.grey,
-            bufferedColor: Colors.white24,
+            playedColor: MediaConfig.playedColor,
+            handleColor: MediaConfig.handleColor,
+            backgroundColor: MediaConfig.bufferedColor,
+            bufferedColor: MediaConfig.bufferedColor.withValues(alpha: 0.3),
           ),
         );
 
@@ -224,21 +225,21 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       if (mounted) {
         _chewieController = ChewieController(
           videoPlayerController: _videoPlayerController,
-          autoPlay: true,
-          looping: false,
-          allowFullScreen: true,
-          showControls: true,
+          autoPlay: MediaConfig.autoPlay,
+          looping: MediaConfig.looping,
+          allowFullScreen: MediaConfig.allowFullScreen,
+          showControls: MediaConfig.showControls,
           materialProgressColors: ChewieProgressColors(
-            playedColor: Colors.red,
-            handleColor: Colors.red,
-            backgroundColor: Colors.grey,
-            bufferedColor: Colors.white24,
+            playedColor: MediaConfig.playedColor,
+            handleColor: MediaConfig.handleColor,
+            backgroundColor: MediaConfig.bufferedColor,
+            bufferedColor: MediaConfig.bufferedColor.withValues(alpha: 0.3),
           ),
         );
 
         setState(() {
           _isInitialized = true;
-          _hasError = false,
+          _hasError = false;
         });
       }
     } catch (e) {
@@ -255,26 +256,27 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: ThemeConfig.background,
       body: SafeArea(
         child: Column(
           children: [
             // Custom app bar
             Container(
-              color: Colors.black87,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              color: ThemeConfig.background.withValues(alpha: 0.9),
+              padding: EdgeInsets.symmetric(
+                horizontal: ThemeConfig.spacingS,
+                vertical: ThemeConfig.spacingXS,
+              ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(Icons.arrow_back, color: ThemeConfig.textPrimary),
                     onPressed: () => Navigator.pop(context),
                   ),
                   Expanded(
                     child: Text(
                       widget.movie.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+                      style: ThemeConfig.bodyLarge.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -290,10 +292,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 child: _hasError
                     ? _buildErrorWidget()
                     : !_isInitialized
-                        ? const CircularProgressIndicator(color: Colors.red)
+                        ? CircularProgressIndicator(color: ThemeConfig.primary)
                         : _chewieController != null
                             ? Chewie(controller: _chewieController!)
-                            : const CircularProgressIndicator(color: Colors.red),
+                            : CircularProgressIndicator(color: ThemeConfig.primary),
               ),
             ),
           ],
@@ -304,31 +306,27 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   Widget _buildErrorWidget() {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(ThemeConfig.spacingL),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
-            color: Colors.red,
-            size: 64,
+            color: ThemeConfig.error,
+            size: ThemeConfig.iconSizeXL,
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Error loading video',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
+          SizedBox(height: ThemeConfig.spacingM),
           Text(
-            _errorMessage ?? 'Unknown error occurred',
-            style: const TextStyle(color: Colors.grey, fontSize: 14),
+            MediaConfig.videoLoadErrorMessage,
+            style: ThemeConfig.heading3,
+          ),
+          SizedBox(height: ThemeConfig.spacingM),
+          Text(
+            _errorMessage ?? MediaConfig.networkErrorMessage,
+            style: ThemeConfig.bodySmall,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: ThemeConfig.spacingL),
           ElevatedButton.icon(
             onPressed: () {
               setState(() {
@@ -341,8 +339,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             icon: const Icon(Icons.refresh),
             label: const Text('Retry'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: ThemeConfig.primary,
+              foregroundColor: ThemeConfig.textPrimary,
             ),
           ),
         ],

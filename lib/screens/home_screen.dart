@@ -4,7 +4,7 @@ import '../providers/content_provider.dart';
 import '../models/movie.dart';
 import '../widgets/movie_row.dart';
 import '../widgets/hero_banner.dart';
-import '../utils/colors.dart';
+import 'package:reyrazak/config/app_config.dart';
 import 'video_player_screen.dart';
 import 'detail_screen.dart';
 
@@ -57,20 +57,20 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, contentProvider, child) {
         if (contentProvider.isLoading) {
           return Container(
-            color: AppColors.background,
+            color: ThemeConfig.background,
             child: const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: CircularProgressIndicator(color: ThemeConfig.primary),
             ),
           );
         }
 
         if (contentProvider.errorMessage != null) {
           return Container(
-            color: AppColors.background,
+            color: ThemeConfig.background,
             child: Center(
               child: Text(
                 contentProvider.errorMessage!,
-                style: const TextStyle(color: AppColors.primary),
+                style: const TextStyle(color: ThemeConfig.primary),
               ),
             ),
           );
@@ -78,11 +78,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (contentProvider.allContent.isEmpty) {
           return Container(
-            color: AppColors.background,
+            color: ThemeConfig.background,
             child: const Center(
               child: Text(
                 'No content available',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 18),
+                style: TextStyle(color: ThemeConfig.textPrimary, fontSize: 18),
               ),
             ),
           );
@@ -94,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final bannerContent = allContent.isNotEmpty ? allContent.first : null;
 
         return Container(
-          color: AppColors.background,
+          color: ThemeConfig.background,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

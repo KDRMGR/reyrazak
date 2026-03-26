@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../utils/colors.dart';
+import 'package:reyrazak/config/app_config.dart';
 import 'main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -60,9 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.background.withOpacity(0.5),
-                  AppColors.background.withOpacity(0.75),
-                  AppColors.background.withOpacity(0.95),
+                  ThemeConfig.background.withOpacity(0.5),
+                  ThemeConfig.background.withOpacity(0.75),
+                  ThemeConfig.background.withOpacity(0.95),
                 ],
               ),
             ),
@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 margin: const EdgeInsets.all(32),
                 padding: const EdgeInsets.all(48),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.75),
+                  color: ThemeConfig.background.withOpacity(0.75),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Text(
                           'REY-Play',
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: ThemeConfig.primary,
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Text(
                           'Your Premium Streaming Experience',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: ThemeConfig.textSecondary,
                             fontSize: 14,
                           ),
                           textAlign: TextAlign.center,
@@ -113,46 +113,46 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 48),
                         TextField(
                           controller: _usernameController,
-                          style: const TextStyle(color: AppColors.textPrimary),
+                          style: const TextStyle(color: ThemeConfig.textPrimary),
                           decoration: InputDecoration(
                             labelText: 'Username',
-                            labelStyle: const TextStyle(color: AppColors.textSecondary),
+                            labelStyle: const TextStyle(color: ThemeConfig.textSecondary),
                             filled: true,
-                            fillColor: AppColors.surface,
+                            fillColor: ThemeConfig.surface,
                             enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: AppColors.surface),
+                              borderSide: const BorderSide(color: ThemeConfig.surface),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                              borderSide: const BorderSide(color: ThemeConfig.primary, width: 2),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            prefixIcon: const Icon(Icons.person, color: AppColors.textSecondary),
+                            prefixIcon: const Icon(Icons.person, color: ThemeConfig.textSecondary),
                           ),
                         ),
                         const SizedBox(height: 20),
                         TextField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
-                          style: const TextStyle(color: AppColors.textPrimary),
+                          style: const TextStyle(color: ThemeConfig.textPrimary),
                           decoration: InputDecoration(
                             labelText: 'Password',
-                            labelStyle: const TextStyle(color: AppColors.textSecondary),
+                            labelStyle: const TextStyle(color: ThemeConfig.textSecondary),
                             filled: true,
-                            fillColor: AppColors.surface,
+                            fillColor: ThemeConfig.surface,
                             enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: AppColors.surface),
+                              borderSide: const BorderSide(color: ThemeConfig.surface),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                              borderSide: const BorderSide(color: ThemeConfig.primary, width: 2),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            prefixIcon: const Icon(Icons.lock, color: AppColors.textSecondary),
+                            prefixIcon: const Icon(Icons.lock, color: ThemeConfig.textSecondary),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                color: AppColors.textSecondary,
+                                color: ThemeConfig.textSecondary,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -169,18 +169,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             margin: const EdgeInsets.only(bottom: 20),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: ThemeConfig.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                              border: Border.all(color: ThemeConfig.primary.withOpacity(0.3)),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.error_outline, color: AppColors.primary, size: 20),
+                                const Icon(Icons.error_outline, color: ThemeConfig.primary, size: 20),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     authService.errorMessage!,
-                                    style: const TextStyle(color: AppColors.primary, fontSize: 14),
+                                    style: const TextStyle(color: ThemeConfig.primary, fontSize: 14),
                                   ),
                                 ),
                               ],
@@ -191,8 +191,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: ElevatedButton(
                             onPressed: authService.isLoading ? null : _handleLogin,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: AppColors.textPrimary,
+                              backgroundColor: ThemeConfig.primary,
+                              foregroundColor: ThemeConfig.textPrimary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -203,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     height: 24,
                                     width: 24,
                                     child: CircularProgressIndicator(
-                                      color: AppColors.textPrimary,
+                                      color: ThemeConfig.textPrimary,
                                       strokeWidth: 2,
                                     ),
                                   )
@@ -283,7 +283,7 @@ class _AnimatedPosterBackgroundState extends State<AnimatedPosterBackground>
               widget.posters[posterIndex],
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                return Container(color: AppColors.surface);
+                return Container(color: ThemeConfig.surface);
               },
             ),
           ),

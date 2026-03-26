@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/content_provider.dart';
 import '../models/movie.dart';
 import '../widgets/movie_row.dart';
-import '../utils/colors.dart';
+import 'package:reyrazak/config/app_config.dart';
 import 'player_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -46,7 +46,7 @@ class _LibraryScreenState extends State<LibraryScreen>
     return Consumer<ContentProvider>(
       builder: (context, contentProvider, child) {
         return Container(
-          color: AppColors.background,
+          color: ThemeConfig.background,
           child: Column(
             children: [
               Container(
@@ -57,7 +57,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                     const Text(
                       'My Library',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: ThemeConfig.textPrimary,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                       ),
@@ -65,9 +65,9 @@ class _LibraryScreenState extends State<LibraryScreen>
                     const SizedBox(height: 20),
                     TabBar(
                       controller: _tabController,
-                      indicatorColor: AppColors.primary,
-                      labelColor: AppColors.textPrimary,
-                      unselectedLabelColor: AppColors.textSecondary,
+                      indicatorColor: ThemeConfig.primary,
+                      labelColor: ThemeConfig.textPrimary,
+                      unselectedLabelColor: ThemeConfig.textSecondary,
                       labelStyle: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -113,7 +113,7 @@ class _LibraryScreenState extends State<LibraryScreen>
         child: Text(
           'No content available',
           style: TextStyle(
-            color: AppColors.textSecondary,
+            color: ThemeConfig.textSecondary,
             fontSize: 16,
           ),
         ),
@@ -194,10 +194,10 @@ class _GridCardState extends State<_GridCard> {
                       width: double.infinity,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: AppColors.surface,
+                          color: ThemeConfig.surface,
                           child: const Icon(
                             Icons.movie,
-                            color: AppColors.textSecondary,
+                            color: ThemeConfig.textSecondary,
                             size: 60,
                           ),
                         );
@@ -211,8 +211,8 @@ class _GridCardState extends State<_GridCard> {
                 widget.movie.title,
                 style: TextStyle(
                   color: _isHovered
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? ThemeConfig.textPrimary
+                      : ThemeConfig.textSecondary,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),

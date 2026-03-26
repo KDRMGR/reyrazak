@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/movie.dart';
-import '../utils/colors.dart';
+import 'package:reyrazak/config/app_config.dart';
 
 class MovieCard extends StatefulWidget {
   final Movie movie;
@@ -61,10 +61,10 @@ class _MovieCardState extends State<MovieCard> {
                       return Container(
                         width: 180,
                         height: 270,
-                        color: AppColors.surface,
+                        color: ThemeConfig.surface,
                         child: const Icon(
                           Icons.movie,
-                          color: AppColors.textSecondary,
+                          color: ThemeConfig.textSecondary,
                           size: 60,
                         ),
                       );
@@ -78,7 +78,7 @@ class _MovieCardState extends State<MovieCard> {
                 child: Text(
                   widget.movie.title,
                   style: TextStyle(
-                    color: _isHovered ? AppColors.textPrimary : AppColors.textSecondary,
+                    color: _isHovered ? ThemeConfig.textPrimary : ThemeConfig.textSecondary,
                     fontSize: 14,
                     fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w500,
                   ),

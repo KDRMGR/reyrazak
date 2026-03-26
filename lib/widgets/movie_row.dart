@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/movie.dart';
-import '../utils/colors.dart';
+import 'package:reyrazak/config/app_config.dart';
 import 'movie_card.dart';
 
 class MovieRow extends StatelessWidget {
@@ -29,7 +29,7 @@ class MovieRow extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                color: AppColors.textPrimary,
+                color: ThemeConfig.textPrimary,
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,

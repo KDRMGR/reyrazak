@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:provider/provider.dart';
+import 'package:reyrazak/config/app_config.dart';
 import '../models/movie.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';

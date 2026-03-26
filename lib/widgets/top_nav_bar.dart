@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/colors.dart';
+import 'package:reyrazak/config/app_config.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../screens/login_screen.dart';
@@ -24,8 +24,8 @@ class TopNavBar extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.background,
-            AppColors.background.withOpacity(0.0),
+            ThemeConfig.background,
+            ThemeConfig.background.withOpacity(0.0),
           ],
         ),
       ),
@@ -34,7 +34,7 @@ class TopNavBar extends StatelessWidget {
           const Text(
             'REY-Play',
             style: TextStyle(
-              color: AppColors.primary,
+              color: ThemeConfig.primary,
               fontSize: 28,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
@@ -98,8 +98,8 @@ class _NavMenuItemState extends State<_NavMenuItem> {
             border: Border(
               bottom: BorderSide(
                 color: widget.isSelected
-                    ? AppColors.primary
-                    : AppColors.transparent,
+                    ? ThemeConfig.primary
+                    : ThemeConfig.transparent,
                 width: 3,
               ),
             ),
@@ -108,8 +108,8 @@ class _NavMenuItemState extends State<_NavMenuItem> {
             widget.title,
             style: TextStyle(
               color: widget.isSelected || _isHovered
-                  ? AppColors.textPrimary
-                  : AppColors.textSecondary,
+                  ? ThemeConfig.textPrimary
+                  : ThemeConfig.textSecondary,
               fontSize: 16,
               fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
@@ -144,7 +144,7 @@ class _HoverIconButtonState extends State<_HoverIconButton> {
       child: IconButton(
         icon: Icon(
           widget.icon,
-          color: _isHovered ? AppColors.textPrimary : AppColors.textSecondary,
+          color: _isHovered ? ThemeConfig.textPrimary : ThemeConfig.textSecondary,
         ),
         onPressed: widget.onPressed,
       ),
@@ -171,20 +171,20 @@ class _ProfileDropdownState extends State<_ProfileDropdown> {
       onExit: (_) => setState(() => _isHovered = false),
       child: PopupMenuButton<String>(
         offset: const Offset(0, 50),
-        color: AppColors.surface,
+        color: ThemeConfig.surface,
         child: CircleAvatar(
-          backgroundColor: _isHovered ? AppColors.primary : Colors.grey[800],
+          backgroundColor: _isHovered ? ThemeConfig.primary : Colors.grey[800],
           radius: 20,
-          child: const Icon(Icons.person, color: AppColors.textPrimary, size: 22),
+          child: const Icon(Icons.person, color: ThemeConfig.textPrimary, size: 22),
         ),
         itemBuilder: (context) => [
           PopupMenuItem(
             value: 'profile',
             child: Row(
               children: const [
-                Icon(Icons.person, color: AppColors.textPrimary, size: 20),
+                Icon(Icons.person, color: ThemeConfig.textPrimary, size: 20),
                 SizedBox(width: 12),
-                Text('Profile', style: TextStyle(color: AppColors.textPrimary)),
+                Text('Profile', style: TextStyle(color: ThemeConfig.textPrimary)),
               ],
             ),
           ),
@@ -192,9 +192,9 @@ class _ProfileDropdownState extends State<_ProfileDropdown> {
             value: 'logout',
             child: Row(
               children: const [
-                Icon(Icons.logout, color: AppColors.primary, size: 20),
+                Icon(Icons.logout, color: ThemeConfig.primary, size: 20),
                 SizedBox(width: 12),
-                Text('Logout', style: TextStyle(color: AppColors.primary)),
+                Text('Logout', style: TextStyle(color: ThemeConfig.primary)),
               ],
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:reyrazak/config/app_config.dart';
 import 'api_service.dart';
 
 class AuthService extends ChangeNotifier {
@@ -7,10 +8,6 @@ class AuthService extends ChangeNotifier {
   bool _isAuthenticated = false;
   String? _errorMessage;
   bool _isLoading = false;
-
-  static const String _tokenKey = 'access_token';
-  static const String _userIdKey = 'user_id';
-  static const String _usernameKey = 'username';
 
   bool get isAuthenticated => _isAuthenticated;
   String? get errorMessage => _errorMessage;
@@ -21,8 +18,8 @@ class AuthService extends ChangeNotifier {
   Future<void> initialize() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(_tokenKey);
-      final userId = prefs.getString(_userIdKey);
+      final token = prefs.getString(AuthConfig.tokenKey);
+      final userId = prefs.getString(AuthConfig.userIdKey);
 
       if (token != null && token.isNotEmpty && userId != null) {
         _apiService.setAccessToken(token);
@@ -46,9 +43,9 @@ class AuthService extends ChangeNotifier {
 
       // Save session data
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_tokenKey, response['AccessToken'] ?? '');
-      await prefs.setString(_userIdKey, response['User']?['Id'] ?? '');
-      await prefs.setString(_usernameKey, username);
+      await prefs.setString(AuthConfig.tokenKey, response['AccessToken'] ?? '');
+      await prefs.setString(AuthConfig.userIdKey, response['User']?['Id'] ?? '');
+      await prefs.setString(AuthConfig.usernameKey, username);
 
       notifyListeners();
       return true;
@@ -67,9 +64,9 @@ class AuthService extends ChangeNotifier {
 
     // Clear saved session
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_userIdKey);
-    await prefs.remove(_usernameKey);
+    await prefs.remove(AuthConfig.tokenKey);
+    await prefs.remove(AuthConfig.userIdKey);
+    await prefs.remove(AuthConfig.usernameKey);
 
     notifyListeners();
   }

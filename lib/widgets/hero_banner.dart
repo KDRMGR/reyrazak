@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/movie.dart';
-import '../utils/colors.dart';
+import 'package:reyrazak/config/app_config.dart';
 
 class HeroBanner extends StatelessWidget {
   final Movie movie;
@@ -29,10 +29,10 @@ class HeroBanner extends StatelessWidget {
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: AppColors.surface,
+                  color: ThemeConfig.surface,
                   child: const Icon(
                     Icons.movie,
-                    color: AppColors.textSecondary,
+                    color: ThemeConfig.textSecondary,
                     size: 100,
                   ),
                 );
@@ -48,9 +48,9 @@ class HeroBanner extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    AppColors.background.withOpacity(0.3),
-                    AppColors.background.withOpacity(0.8),
-                    AppColors.background,
+                    ThemeConfig.background.withOpacity(0.3),
+                    ThemeConfig.background.withOpacity(0.8),
+                    ThemeConfig.background,
                   ],
                   stops: const [0.0, 0.4, 0.7, 1.0],
                 ),
@@ -68,7 +68,7 @@ class HeroBanner extends StatelessWidget {
                 Text(
                   movie.title,
                   style: const TextStyle(
-                    color: AppColors.textPrimary,
+                    color: ThemeConfig.textPrimary,
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
                     shadows: [
@@ -147,11 +147,11 @@ class _ActionButtonState extends State<_ActionButton> {
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: widget.isPrimary
-                ? AppColors.textPrimary
-                : AppColors.surface.withOpacity(0.8),
+                ? ThemeConfig.textPrimary
+                : ThemeConfig.surface.withOpacity(0.8),
             foregroundColor: widget.isPrimary
-                ? AppColors.background
-                : AppColors.textPrimary,
+                ? ThemeConfig.background
+                : ThemeConfig.textPrimary,
             padding: const EdgeInsets.symmetric(
               horizontal: 32,
               vertical: 16,

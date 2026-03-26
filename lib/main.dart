@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:reyrazak/config/app_config.dart';
 import 'services/auth_service.dart';
 import 'providers/movie_provider.dart';
 import 'providers/content_provider.dart';
@@ -10,22 +11,11 @@ import 'screens/main_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configure status bar to blend with device UI
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.black,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
+  // Configure status bar using ThemeConfig
+  SystemChrome.setSystemUIOverlayStyle(ThemeConfig.lightStatusBar);
 
-  // Set preferred orientations
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // Set preferred orientations from AppConstants
+  SystemChrome.setPreferredOrientations(AppConstants.preferredOrientations);
 
   runApp(const MyApp());
 }
@@ -54,16 +44,9 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'REY-Play',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: Colors.black,
-          colorScheme: ColorScheme.dark(
-            primary: Colors.red,
-            secondary: Colors.red,
-          ),
-        ),
+        title: AppConstants.appName,
+        debugShowCheckedModeBanner: AppConstants.showDebugBanner,
+        theme: ThemeConfig.themeData,
         home: const AppInitializer(),
       ),
     );
@@ -80,10 +63,10 @@ class AppInitializer extends StatelessWidget {
       builder: (context, authService, child) {
         // Show splash screen while checking auth
         if (authService.isLoading) {
-          return const Scaffold(
-            backgroundColor: Colors.black,
+          return Scaffold(
+            backgroundColor: ThemeConfig.background,
             body: Center(
-              child: CircularProgressIndicator(color: Colors.red),
+              child: CircularProgressIndicator(color: ThemeConfig.primary),
             ),
           );
         }
