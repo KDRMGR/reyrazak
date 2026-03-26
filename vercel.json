@@ -1,13 +1,4 @@
 {
-  "builds": [
-    {
-      "src": "pubspec.yaml",
-      "use": "@vercel/static-build",
-      "config": {
-        "outputDirectory": "build/web"
-      }
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
