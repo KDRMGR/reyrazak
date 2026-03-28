@@ -4,7 +4,7 @@ import '../models/movie.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import 'package:reyrazak/config/app_config.dart';
-import 'video_player_screen.dart';
+import 'universal_player_screen.dart';
 
 class DetailScreen extends StatefulWidget {
   final Movie content;
@@ -78,7 +78,7 @@ class _DetailScreenState extends State<DetailScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VideoPlayerScreen(
+        builder: (_) => UniversalPlayerScreen(
           movie: Movie(id: episodeId, title: episodeTitle),
           streamUrl: streamUrl,
         ),

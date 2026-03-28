@@ -74,7 +74,7 @@ class ApiConfig {
 
   /// HLS transcoded stream endpoint
   static String hlsStreamEndpoint(String itemId, String token) =>
-      '/Videos/$itemId/master.m3u8?VideoCodec=h264&AudioCodec=aac&api_key=$token';
+      '/Videos/$itemId/master.m3u8?VideoCodec=h264&AudioCodec=aac&MaxStreamingBitrate=140000000&TranscodingMaxAudioChannels=2&api_key=$token';
 
   /// Get seasons for a TV series
   static String seasonsEndpoint(String seriesId) => '/Shows/$seriesId/Seasons';

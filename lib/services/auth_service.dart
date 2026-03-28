@@ -16,18 +16,33 @@ class AuthService extends ChangeNotifier {
 
   // Initialize and check for saved session
   Future<void> initialize() async {
+    _isLoading = true;
+    notifyListeners();
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(AuthConfig.tokenKey);
       final userId = prefs.getString(AuthConfig.userIdKey);
 
+      debugPrint('🔐 Initializing auth...');
+      debugPrint('Token found: ${token != null && token.isNotEmpty}');
+      debugPrint('UserID found: ${userId != null}');
+
       if (token != null && token.isNotEmpty && userId != null) {
+        // Restore session
         _apiService.setAccessToken(token);
         _isAuthenticated = true;
-        notifyListeners();
+        debugPrint('✅ Session restored successfully');
+      } else {
+        debugPrint('❌ No saved session found');
+        _isAuthenticated = false;
       }
     } catch (e) {
-      print('Error initializing auth: $e');
+      debugPrint('Error initializing auth: $e');
+      _isAuthenticated = false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

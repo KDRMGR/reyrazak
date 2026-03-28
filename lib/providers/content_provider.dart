@@ -6,6 +6,7 @@ class ContentProvider extends ChangeNotifier {
   final ApiService _apiService;
   List<Movie> _movies = [];
   List<Movie> _shows = [];
+  List<Movie> _musicVideos = [];
   List<Movie> _allContent = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -14,9 +15,11 @@ class ContentProvider extends ChangeNotifier {
 
   List<Movie> get movies => _movies;
   List<Movie> get shows => _shows;
+  List<Movie> get musicVideos => _musicVideos;
   List<Movie> get allContent => _allContent;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  ApiService get apiService => _apiService;
 
   Future<void> fetchAllContent() async {
     _isLoading = true;
@@ -25,14 +28,24 @@ class ContentProvider extends ChangeNotifier {
 
     try {
       final data = await _apiService.fetchAllContent();
-      _allContent = data.map((json) => Movie.fromJson(json)).toList();
+
+      // Also fetch music videos
+      final musicVideoData = await _apiService.fetchMusicVideos();
+
+      // Combine all content
+      final combinedData = [...data, ...musicVideoData];
+      _allContent = combinedData.map((json) => Movie.fromJson(json)).toList();
 
       _movies = _allContent.where((item) =>
-        data[_allContent.indexOf(item)]['Type'] == 'Movie'
+        combinedData[_allContent.indexOf(item)]['Type'] == 'Movie'
       ).toList();
 
       _shows = _allContent.where((item) =>
-        data[_allContent.indexOf(item)]['Type'] == 'Series'
+        combinedData[_allContent.indexOf(item)]['Type'] == 'Series'
+      ).toList();
+
+      _musicVideos = _allContent.where((item) =>
+        combinedData[_allContent.indexOf(item)]['Type'] == 'MusicVideo'
       ).toList();
 
       _isLoading = false;
