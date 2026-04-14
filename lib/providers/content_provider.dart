@@ -22,31 +22,23 @@ class ContentProvider extends ChangeNotifier {
   ApiService get apiService => _apiService;
 
   Future<void> fetchAllContent() async {
+    if (_isLoading) return; // prevent concurrent fetches
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final data = await _apiService.fetchAllContent();
-
-      // Also fetch music videos
       final musicVideoData = await _apiService.fetchMusicVideos();
 
-      // Combine all content
+      // Build full list — Movie.fromJson now captures the 'Type' field
       final combinedData = [...data, ...musicVideoData];
       _allContent = combinedData.map((json) => Movie.fromJson(json)).toList();
 
-      _movies = _allContent.where((item) =>
-        combinedData[_allContent.indexOf(item)]['Type'] == 'Movie'
-      ).toList();
-
-      _shows = _allContent.where((item) =>
-        combinedData[_allContent.indexOf(item)]['Type'] == 'Series'
-      ).toList();
-
-      _musicVideos = _allContent.where((item) =>
-        combinedData[_allContent.indexOf(item)]['Type'] == 'MusicVideo'
-      ).toList();
+      // Partition using the type stored on each item — no index tricks needed
+      _movies     = _allContent.where((item) => item.isMovie).toList();
+      _shows      = _allContent.where((item) => item.isSeries).toList();
+      _musicVideos = _allContent.where((item) => item.isMusicVideo).toList();
 
       _isLoading = false;
       notifyListeners();
@@ -85,15 +77,7 @@ class ContentProvider extends ChangeNotifier {
     }
   }
 
-  String getImageUrl(String itemId) {
-    return _apiService.getImageUrl(itemId);
-  }
-
-  String getBackdropUrl(String itemId) {
-    return _apiService.getBackdropUrl(itemId);
-  }
-
-  String getStreamUrl(String itemId) {
-    return _apiService.getStreamUrl(itemId);
-  }
+  String getImageUrl(String itemId) => _apiService.getImageUrl(itemId);
+  String getBackdropUrl(String itemId) => _apiService.getBackdropUrl(itemId);
+  String getStreamUrl(String itemId) => _apiService.getStreamUrl(itemId);
 }

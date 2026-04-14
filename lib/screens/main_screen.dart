@@ -18,7 +18,9 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
+  // IndexedStack keeps every screen alive so tab switches are instant and
+  // state (scroll positions, TabControllers, loaded data) is preserved.
+  static const List<Widget> _screens = [
     HomeScreen(),
     SearchScreen(),
     LibraryScreen(),
@@ -47,7 +49,12 @@ class _MainScreenState extends State<MainScreen> {
               onTabSelected: _onTabSelected,
             ),
           Expanded(
-            child: _screens[_currentIndex],
+            // IndexedStack renders all screens but only shows _currentIndex.
+            // This preserves every screen's State across tab switches.
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _screens,
+            ),
           ),
         ],
       ),

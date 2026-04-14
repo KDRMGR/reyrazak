@@ -29,10 +29,28 @@ class AuthService extends ChangeNotifier {
       debugPrint('UserID found: ${userId != null}');
 
       if (token != null && token.isNotEmpty && userId != null) {
-        // Restore session
+        // Restore the token so we can validate it
         _apiService.setAccessToken(token);
-        _isAuthenticated = true;
-        debugPrint('✅ Session restored successfully');
+
+        // Verify the token is still accepted by the server
+        try {
+          final valid = await _apiService.validateSession();
+          if (valid) {
+            _isAuthenticated = true;
+            debugPrint('✅ Session restored and validated');
+          } else {
+            debugPrint('⚠️ Stored token rejected by server — clearing session');
+            await _clearStoredSession(prefs);
+            _isAuthenticated = false;
+          }
+        } catch (networkError) {
+          // Cannot reach the server (offline / DNS error).
+          // Allow the app to continue with the cached token — API calls will
+          // fail individually with meaningful errors rather than forcing a
+          // re-login on every connectivity hiccup.
+          debugPrint('⚠️ Could not validate session (network error): $networkError');
+          _isAuthenticated = true;
+        }
       } else {
         debugPrint('❌ No saved session found');
         _isAuthenticated = false;
@@ -44,6 +62,13 @@ class AuthService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _clearStoredSession(SharedPreferences prefs) async {
+    _apiService.setAccessToken('');
+    await prefs.remove(AuthConfig.tokenKey);
+    await prefs.remove(AuthConfig.userIdKey);
+    await prefs.remove(AuthConfig.usernameKey);
   }
 
   Future<bool> login(String username, String password) async {

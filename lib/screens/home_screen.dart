@@ -35,9 +35,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _playContent(Movie content, ContentProvider provider, {bool isSeries = false}) {
-    if (isSeries) {
-      // Navigate to detail screen for TV shows
+  void _playContent(Movie content, ContentProvider provider) {
+    if (content.isSeries) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -49,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } else {
-      // Navigate directly to player for movies
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -245,11 +243,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Trending Now',
                       movies: allContent.sublist(0, 10),
                       getImageUrl: contentProvider.getImageUrl,
-                      onMovieTap: (content) {
-                        final isSeries = content.title.toLowerCase().contains('series') ||
-                            content.title.toLowerCase().contains('season');
-                        _playContent(content, contentProvider, isSeries: isSeries);
-                      },
+                      onMovieTap: (content) =>
+                          _playContent(content, contentProvider),
                     ),
 
                   SizedBox(height: ThemeConfig.spacingL),
@@ -260,7 +255,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Movies',
                       movies: movies.take(15).toList(),
                       getImageUrl: contentProvider.getImageUrl,
-                      onMovieTap: (movie) => _playContent(movie, contentProvider),
+                      onMovieTap: (movie) =>
+                          _playContent(movie, contentProvider),
                     ),
 
                   SizedBox(height: ThemeConfig.spacingL),
@@ -271,7 +267,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'TV Shows',
                       movies: shows.take(15).toList(),
                       getImageUrl: contentProvider.getImageUrl,
-                      onMovieTap: (show) => _playContent(show, contentProvider, isSeries: true),
+                      onMovieTap: (show) =>
+                          _playContent(show, contentProvider),
                     ),
 
                   SizedBox(height: ThemeConfig.spacingL),
@@ -282,11 +279,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Anime',
                       movies: animeContent.take(15).toList(),
                       getImageUrl: contentProvider.getImageUrl,
-                      onMovieTap: (anime) {
-                        final isSeries = anime.title.toLowerCase().contains('series') ||
-                            anime.title.toLowerCase().contains('season');
-                        _playContent(anime, contentProvider, isSeries: isSeries);
-                      },
+                      onMovieTap: (anime) =>
+                          _playContent(anime, contentProvider),
                     ),
 
                   SizedBox(height: ThemeConfig.spacingL),
@@ -297,7 +291,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Music Videos',
                       movies: musicContent.take(15).toList(),
                       getImageUrl: contentProvider.getImageUrl,
-                      onMovieTap: (music) => _playContent(music, contentProvider),
+                      onMovieTap: (music) =>
+                          _playContent(music, contentProvider),
                     ),
 
                   SizedBox(height: ThemeConfig.spacingL),
@@ -308,11 +303,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Action & Adventure',
                       movies: actionContent.take(15).toList(),
                       getImageUrl: contentProvider.getImageUrl,
-                      onMovieTap: (content) {
-                        final isSeries = content.title.toLowerCase().contains('series') ||
-                            content.title.toLowerCase().contains('season');
-                        _playContent(content, contentProvider, isSeries: isSeries);
-                      },
+                      onMovieTap: (content) =>
+                          _playContent(content, contentProvider),
                     ),
 
                   SizedBox(height: ThemeConfig.spacingL),
@@ -323,11 +315,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Comedy',
                       movies: comedyContent.take(15).toList(),
                       getImageUrl: contentProvider.getImageUrl,
-                      onMovieTap: (content) {
-                        final isSeries = content.title.toLowerCase().contains('series') ||
-                            content.title.toLowerCase().contains('season');
-                        _playContent(content, contentProvider, isSeries: isSeries);
-                      },
+                      onMovieTap: (content) =>
+                          _playContent(content, contentProvider),
                     ),
 
                   SizedBox(height: ThemeConfig.spacingL),
@@ -338,11 +327,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Recently Added',
                       movies: recentlyAdded,
                       getImageUrl: contentProvider.getImageUrl,
-                      onMovieTap: (content) {
-                        final isSeries = content.title.toLowerCase().contains('series') ||
-                            content.title.toLowerCase().contains('season');
-                        _playContent(content, contentProvider, isSeries: isSeries);
-                      },
+                      onMovieTap: (content) =>
+                          _playContent(content, contentProvider),
                     ),
 
                   SizedBox(height: ThemeConfig.spacingL),
@@ -353,11 +339,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Popular on REY-Play',
                       movies: allContent.sublist(10, 20),
                       getImageUrl: contentProvider.getImageUrl,
-                      onMovieTap: (content) {
-                        final isSeries = content.title.toLowerCase().contains('series') ||
-                            content.title.toLowerCase().contains('season');
-                        _playContent(content, contentProvider, isSeries: isSeries);
-                      },
+                      onMovieTap: (content) =>
+                          _playContent(content, contentProvider),
                     ),
 
                   SizedBox(height: ThemeConfig.spacingXXL),

@@ -31,6 +31,8 @@ class UniversalPlayerScreen extends StatefulWidget {
   final String streamUrl;
   final List<Movie>? playlist;
   final int? currentIndex;
+  /// Resume playback from a previously saved position.
+  final Duration? startPosition;
 
   const UniversalPlayerScreen({
     super.key,
@@ -38,6 +40,7 @@ class UniversalPlayerScreen extends StatefulWidget {
     required this.streamUrl,
     this.playlist,
     this.currentIndex,
+    this.startPosition,
   });
 
   @override
@@ -174,9 +177,13 @@ class _UniversalPlayerScreenState extends State<UniversalPlayerScreen>
         });
       }
 
-      // Auto-play
+      // Auto-play (with resume-position seek)
       if (MediaConfig.autoPlay && mounted) {
         await Future.delayed(const Duration(milliseconds: 500));
+        if (widget.startPosition != null &&
+            widget.startPosition! > Duration.zero) {
+          await _videoController.seekTo(widget.startPosition!);
+        }
         _videoController.play();
       }
     } catch (e) {
@@ -321,9 +328,13 @@ class _UniversalPlayerScreenState extends State<UniversalPlayerScreen>
         });
       }
 
-      // Auto-play
+      // Auto-play (with resume-position seek)
       if (MediaConfig.autoPlay && mounted) {
         await Future.delayed(const Duration(milliseconds: 500));
+        if (widget.startPosition != null &&
+            widget.startPosition! > Duration.zero) {
+          await _videoController.seekTo(widget.startPosition!);
+        }
         _videoController.play();
       }
     } catch (e) {
@@ -358,13 +369,33 @@ class _UniversalPlayerScreenState extends State<UniversalPlayerScreen>
 
   Future<void> _saveProgress() async {
     try {
+      final contentProvider =
+          Provider.of<ContentProvider>(context, listen: false);
+      final posterUrl = contentProvider.getImageUrl(widget.movie.id);
+
+      // Map Movie.type to the ContentType enum used by WatchProgressService
+      ContentType contentType;
+      switch (widget.movie.type) {
+        case 'Series':
+          contentType = ContentType.series;
+          break;
+        case 'Episode':
+          contentType = ContentType.episode;
+          break;
+        case 'MusicVideo':
+          contentType = ContentType.musicVideo;
+          break;
+        default:
+          contentType = ContentType.movie;
+      }
+
       await _watchProgressService.saveWatchProgress(
         contentId: widget.movie.id,
         contentTitle: widget.movie.title,
-        contentType: ContentType.movie,
+        contentType: contentType,
         positionTicks: _currentPosition.inMicroseconds * 10,
         runtimeTicks: _totalDuration.inMicroseconds * 10,
-        posterUrl: null,
+        posterUrl: posterUrl,
       );
     } catch (e) {
       debugPrint('Error saving progress: $e');
@@ -591,36 +622,43 @@ class _UniversalPlayerScreenState extends State<UniversalPlayerScreen>
   }
 
   Widget _buildPlayer() {
-    return GestureDetector(
-      onTap: _toggleControls,
-      child: Stack(
-        children: [
-          // Video Player
+    return Stack(
+      children: [
+        // Video Player
+        Center(
+          child: AspectRatio(
+            aspectRatio: _videoController.value.aspectRatio,
+            child: Chewie(controller: _chewieController!),
+          ),
+        ),
+
+        // Buffering Indicator
+        if (_isBuffering)
           Center(
-            child: AspectRatio(
-              aspectRatio: _videoController.value.aspectRatio,
-              child: Chewie(controller: _chewieController!),
+            child: CircularProgressIndicator(
+              color: ThemeConfig.primary,
             ),
           ),
 
-          // Buffering Indicator
-          if (_isBuffering)
-            Center(
-              child: CircularProgressIndicator(
-                color: ThemeConfig.primary,
-              ),
-            ),
+        // Always-present tap target — sits above Chewie so taps are never
+        // swallowed by Chewie's internal gesture handler.  Control widgets
+        // rendered below (higher Z-order) still receive their own taps first.
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _toggleControls,
+          ),
+        ),
 
-          // Custom Controls Overlay
-          if (_showControls) _buildControlsOverlay(),
+        // Custom Controls Overlay
+        if (_showControls) _buildControlsOverlay(),
 
-          // Top Bar (always visible when controls shown)
-          if (_showControls) _buildTopBar(),
+        // Top Bar (always visible when controls shown)
+        if (_showControls) _buildTopBar(),
 
-          // Bottom Bar (progress + controls)
-          if (_showControls) _buildBottomBar(),
-        ],
-      ),
+        // Bottom Bar (progress + controls)
+        if (_showControls) _buildBottomBar(),
+      ],
     );
   }
 
@@ -678,42 +716,45 @@ class _UniversalPlayerScreenState extends State<UniversalPlayerScreen>
 
   Widget _buildControlsOverlay() {
     return Positioned.fill(
-      child: Container(
-        color: Colors.black.withValues(alpha: 0.3),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            // Fast Backward (30s)
-            _buildControlButton(
-              icon: Icons.fast_rewind,
-              onPressed: _fastBackward,
-              size: 40,
-            ),
-            // Skip Backward (10s)
-            _buildControlButton(
-              icon: Icons.replay_10,
-              onPressed: _skipBackward,
-              size: 45,
-            ),
-            // Play/Pause
-            _buildControlButton(
-              icon: _isPlaying ? Icons.pause : Icons.play_arrow,
-              onPressed: _togglePlayPause,
-              size: 70,
-            ),
-            // Skip Forward (10s)
-            _buildControlButton(
-              icon: Icons.forward_10,
-              onPressed: _skipForward,
-              size: 45,
-            ),
-            // Fast Forward (30s)
-            _buildControlButton(
-              icon: Icons.fast_forward,
-              onPressed: _fastForward,
-              size: 40,
-            ),
-          ],
+      child: GestureDetector(
+        onTap: _toggleControls,
+        child: Container(
+          color: Colors.black.withValues(alpha: 0.3),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Fast Backward (30s)
+              _buildControlButton(
+                icon: Icons.fast_rewind,
+                onPressed: _fastBackward,
+                size: 40,
+              ),
+              // Skip Backward (10s)
+              _buildControlButton(
+                icon: Icons.replay_10,
+                onPressed: _skipBackward,
+                size: 45,
+              ),
+              // Play/Pause
+              _buildControlButton(
+                icon: _isPlaying ? Icons.pause : Icons.play_arrow,
+                onPressed: _togglePlayPause,
+                size: 70,
+              ),
+              // Skip Forward (10s)
+              _buildControlButton(
+                icon: Icons.forward_10,
+                onPressed: _skipForward,
+                size: 45,
+              ),
+              // Fast Forward (30s)
+              _buildControlButton(
+                icon: Icons.fast_forward,
+                onPressed: _fastForward,
+                size: 40,
+              ),
+            ],
+          ),
         ),
       ),
     );

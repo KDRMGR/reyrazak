@@ -31,18 +31,26 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Trigger a fetch if the provider has no data yet and isn't already loading.
+    // This covers the case where the user lands on Library before Home has
+    // initialised, or after a cold start with IndexedStack keeping the tab alive.
+    final provider = Provider.of<ContentProvider>(context, listen: false);
+    if (provider.allContent.isEmpty && !provider.isLoading) {
+      provider.fetchAllContent();
+    }
+  }
+
+  @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
 
-  void _playContent(Movie content, ContentProvider provider, List<Movie> playlist, int currentIndex) {
-    // Check if it's a series (TV show) or movie
-    final isSeries = content.title.toLowerCase().contains('series') ||
-        content.title.toLowerCase().contains('season');
-
-    if (isSeries) {
-      // Navigate to detail screen for series
+  void _playContent(Movie content, ContentProvider provider,
+      List<Movie> playlist, int currentIndex) {
+    if (content.isSeries) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -54,7 +62,6 @@ class _LibraryScreenState extends State<LibraryScreen>
         ),
       );
     } else {
-      // Direct play for movies and music videos with playlist support
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -69,9 +76,8 @@ class _LibraryScreenState extends State<LibraryScreen>
     }
   }
 
-  List<Movie> _filterContent(List<Movie> content, String filter, ContentProvider provider) {
-    if (filter == 'All') return content;
-
+  List<Movie> _filterContent(
+      List<Movie> content, String filter, ContentProvider provider) {
     switch (filter) {
       case 'Movies':
         return provider.movies;
@@ -80,7 +86,8 @@ class _LibraryScreenState extends State<LibraryScreen>
       case 'Music Videos':
         return provider.musicVideos;
       case 'Anime':
-        // Filter anime by title keywords (ideally should use genre from API)
+        // Anime is a sub-genre: filter series/movies by common title keywords.
+        // This is a best-effort approach when the server doesn't expose genre tags.
         return content.where((item) {
           final title = item.title.toLowerCase();
           return title.contains('anime') ||
@@ -89,9 +96,12 @@ class _LibraryScreenState extends State<LibraryScreen>
               title.contains('dragon ball') ||
               title.contains('attack on titan') ||
               title.contains('demon slayer') ||
-              title.contains('my hero academia');
+              title.contains('my hero academia') ||
+              title.contains('jujutsu') ||
+              title.contains('bleach') ||
+              title.contains('fullmetal');
         }).toList();
-      default:
+      default: // 'All'
         return content;
     }
   }
@@ -100,6 +110,47 @@ class _LibraryScreenState extends State<LibraryScreen>
   Widget build(BuildContext context) {
     return Consumer<ContentProvider>(
       builder: (context, contentProvider, child) {
+        // Show a full-screen loader while initial fetch is in flight
+        if (contentProvider.isLoading && contentProvider.allContent.isEmpty) {
+          return Container(
+            color: ThemeConfig.background,
+            child: Center(
+              child: CircularProgressIndicator(color: ThemeConfig.primary),
+            ),
+          );
+        }
+
+        // Show error with retry
+        if (contentProvider.errorMessage != null &&
+            contentProvider.allContent.isEmpty) {
+          return Container(
+            color: ThemeConfig.background,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline,
+                      color: ThemeConfig.primary,
+                      size: ThemeConfig.iconSizeXL * 2),
+                  SizedBox(height: ThemeConfig.spacingL),
+                  Text('Could not load library',
+                      style: ThemeConfig.heading3),
+                  SizedBox(height: ThemeConfig.spacingS),
+                  ElevatedButton.icon(
+                    onPressed: contentProvider.fetchAllContent,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ThemeConfig.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
         return Container(
           color: ThemeConfig.background,
           child: Column(
@@ -123,10 +174,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'My Library',
-                      style: ThemeConfig.heading1,
-                    ),
+                    Text('My Library', style: ThemeConfig.heading1),
                     SizedBox(height: ThemeConfig.spacingL),
                     _buildTabBar(),
                   ],
@@ -138,9 +186,12 @@ class _LibraryScreenState extends State<LibraryScreen>
                   controller: _tabController,
                   children: _tabs.map((tab) {
                     return _buildContentGrid(
-                      _filterContent(contentProvider.allContent, tab['title'], contentProvider),
+                      _filterContent(
+                          contentProvider.allContent,
+                          tab['title'] as String,
+                          contentProvider),
                       contentProvider,
-                      tab['title'],
+                      tab['title'] as String,
                     );
                   }).toList(),
                 ),
@@ -178,9 +229,9 @@ class _LibraryScreenState extends State<LibraryScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(tab['icon'], size: ThemeConfig.iconSizeM),
+                Icon(tab['icon'] as IconData, size: ThemeConfig.iconSizeM),
                 SizedBox(width: ThemeConfig.spacingS),
-                Text(tab['title']),
+                Text(tab['title'] as String),
               ],
             ),
           );
@@ -189,13 +240,10 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  void _shufflePlayMusicVideos(List<Movie> musicVideos, ContentProvider provider) {
+  void _shufflePlayMusicVideos(
+      List<Movie> musicVideos, ContentProvider provider) {
     if (musicVideos.isEmpty) return;
-
-    // Shuffle the list
     final shuffled = List<Movie>.from(musicVideos)..shuffle();
-
-    // Play the first video with full playlist for next/previous navigation
     final firstVideo = shuffled.first;
     Navigator.push(
       context,
@@ -225,16 +273,14 @@ class _LibraryScreenState extends State<LibraryScreen>
             SizedBox(height: ThemeConfig.spacingL),
             Text(
               'No $category Available',
-              style: ThemeConfig.heading3.copyWith(
-                color: ThemeConfig.textSecondary,
-              ),
+              style:
+                  ThemeConfig.heading3.copyWith(color: ThemeConfig.textSecondary),
             ),
             SizedBox(height: ThemeConfig.spacingS),
             Text(
               'Check back later for new content',
-              style: ThemeConfig.bodyMedium.copyWith(
-                color: ThemeConfig.textSecondary.withValues(alpha: 0.7),
-              ),
+              style: ThemeConfig.bodyMedium
+                  .copyWith(color: ThemeConfig.textSecondary.withValues(alpha: 0.7)),
             ),
           ],
         ),
@@ -244,7 +290,7 @@ class _LibraryScreenState extends State<LibraryScreen>
     return Column(
       children: [
         // Shuffle button for Music Videos only
-        if (category == 'Music Videos' && content.isNotEmpty)
+        if (category == 'Music Videos')
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: ThemeConfig.spacingXL,
@@ -255,12 +301,11 @@ class _LibraryScreenState extends State<LibraryScreen>
               height: 56,
               child: ElevatedButton.icon(
                 onPressed: () => _shufflePlayMusicVideos(content, provider),
-                icon: Icon(Icons.shuffle, size: 24),
+                icon: const Icon(Icons.shuffle, size: 24),
                 label: Text(
                   'Shuffle Play All',
-                  style: ThemeConfig.bodyLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: ThemeConfig.bodyLarge
+                      .copyWith(fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ThemeConfig.primary,
@@ -274,15 +319,14 @@ class _LibraryScreenState extends State<LibraryScreen>
               ),
             ),
           ),
-        // Grid
         Expanded(
           child: GridView.builder(
             padding: EdgeInsets.all(ThemeConfig.spacingXL),
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 200,
               childAspectRatio: 0.66,
-              crossAxisSpacing: ThemeConfig.spacingM,
-              mainAxisSpacing: ThemeConfig.spacingL,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 16,
             ),
             itemCount: content.length,
             itemBuilder: (context, index) {
@@ -291,7 +335,6 @@ class _LibraryScreenState extends State<LibraryScreen>
                 movie: item,
                 imageUrl: provider.getImageUrl(item.id),
                 onTap: () => _playContent(item, provider, content, index),
-                category: category,
               );
             },
           ),
@@ -301,17 +344,19 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 }
 
+// ---------------------------------------------------------------------------
+// Grid card
+// ---------------------------------------------------------------------------
+
 class _EnhancedGridCard extends StatefulWidget {
   final Movie movie;
   final String imageUrl;
   final VoidCallback onTap;
-  final String category;
 
   const _EnhancedGridCard({
     required this.movie,
     required this.imageUrl,
     required this.onTap,
-    required this.category,
   });
 
   @override
@@ -351,21 +396,21 @@ class _EnhancedGridCardState extends State<_EnhancedGridCard>
     }
   }
 
-  String _getCategoryBadge() {
+  String _badge() {
+    if (widget.movie.isSeries || widget.movie.isEpisode) return 'TV';
+    if (widget.movie.isMusicVideo) return 'Music';
+    if (widget.movie.isMovie) return 'Movie';
+    // Fallback to title-based detection only when type is unknown
     final title = widget.movie.title.toLowerCase();
     if (title.contains('series') || title.contains('season')) return 'TV';
-    if (title.contains('anime')) return 'Anime';
     if (title.contains('music')) return 'Music';
     return 'Movie';
   }
 
-  Color _getCategoryColor() {
-    final badge = _getCategoryBadge();
-    switch (badge) {
+  Color _badgeColor() {
+    switch (_badge()) {
       case 'TV':
         return Colors.blue;
-      case 'Anime':
-        return Colors.purple;
       case 'Music':
         return Colors.green;
       default:
@@ -382,38 +427,28 @@ class _EnhancedGridCardState extends State<_EnhancedGridCard>
         onTap: widget.onTap,
         child: AnimatedBuilder(
           animation: _scaleAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _scaleAnimation.value,
-              child: child,
-            );
-          },
+          builder: (context, child) =>
+              Transform.scale(scale: _scaleAnimation.value, child: child),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Stack(
                   children: [
-                    // Poster Image
+                    // Poster
                     Container(
                       decoration: BoxDecoration(
                         borderRadius:
                             BorderRadius.circular(ThemeConfig.radiusL),
-                        boxShadow: _isHovered
-                            ? [
-                                BoxShadow(
-                                  color: _getCategoryColor().withValues(alpha: 0.4),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ]
-                            : [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
+                        boxShadow: [
+                          BoxShadow(
+                            color: _isHovered
+                                ? _badgeColor().withValues(alpha: 0.4)
+                                : Colors.black.withValues(alpha: 0.3),
+                            blurRadius: _isHovered ? 20 : 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: ClipRRect(
                         borderRadius:
@@ -435,7 +470,6 @@ class _EnhancedGridCardState extends State<_EnhancedGridCard>
                                 );
                               },
                             ),
-                            // Gradient Overlay (shown on hover)
                             AnimatedOpacity(
                               opacity: _isHovered ? 1.0 : 0.0,
                               duration: ThemeConfig.animationFast,
@@ -452,7 +486,6 @@ class _EnhancedGridCardState extends State<_EnhancedGridCard>
                                 ),
                               ),
                             ),
-                            // Play Button (shown on hover)
                             AnimatedOpacity(
                               opacity: _isHovered ? 1.0 : 0.0,
                               duration: ThemeConfig.animationFast,
@@ -483,7 +516,7 @@ class _EnhancedGridCardState extends State<_EnhancedGridCard>
                         ),
                       ),
                     ),
-                    // Category Badge
+                    // Badge
                     Positioned(
                       top: ThemeConfig.spacingS,
                       right: ThemeConfig.spacingS,
@@ -493,7 +526,7 @@ class _EnhancedGridCardState extends State<_EnhancedGridCard>
                           vertical: ThemeConfig.spacingXS,
                         ),
                         decoration: BoxDecoration(
-                          color: _getCategoryColor(),
+                          color: _badgeColor(),
                           borderRadius:
                               BorderRadius.circular(ThemeConfig.radiusS),
                           boxShadow: [
@@ -504,7 +537,7 @@ class _EnhancedGridCardState extends State<_EnhancedGridCard>
                           ],
                         ),
                         child: Text(
-                          _getCategoryBadge(),
+                          _badge(),
                           style: ThemeConfig.caption.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -517,14 +550,14 @@ class _EnhancedGridCardState extends State<_EnhancedGridCard>
                 ),
               ),
               SizedBox(height: ThemeConfig.spacingS),
-              // Title
               Text(
                 widget.movie.title,
                 style: ThemeConfig.bodyMedium.copyWith(
                   color: _isHovered
                       ? ThemeConfig.textPrimary
                       : ThemeConfig.textSecondary,
-                  fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w500,
+                  fontWeight:
+                      _isHovered ? FontWeight.w600 : FontWeight.w500,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

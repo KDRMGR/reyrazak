@@ -169,6 +169,27 @@ class ApiService {
     return ApiConfig.fullUrl(ApiConfig.hlsStreamEndpoint(itemId, _accessToken!));
   }
 
+  /// Verify that the stored token is still accepted by the server.
+  /// Returns true if valid, false if the server responds with 401/403.
+  /// Throws on network errors so the caller can decide whether to treat
+  /// that as "expired" or "offline".
+  Future<bool> validateSession() async {
+    if (_accessToken == null || _accessToken!.isEmpty) return false;
+
+    try {
+      // /Users/Me is a lightweight Emby/Jellyfin endpoint that requires auth
+      final url = Uri.parse('${ApiConfig.baseUrl}/Users/Me');
+      final response = await http
+          .get(url, headers: _getHeaders())
+          .timeout(const Duration(seconds: 10));
+
+      return response.statusCode == 200;
+    } catch (_) {
+      // Network error — treat as unknown, not explicitly expired
+      rethrow;
+    }
+  }
+
   Future<List<dynamic>> fetchSeasons(String seriesId) async {
     final url = Uri.parse(ApiConfig.fullUrl(ApiConfig.seasonsEndpoint(seriesId)));
 

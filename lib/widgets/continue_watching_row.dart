@@ -46,11 +46,15 @@ class _ContinueWatchingRowState extends State<ContinueWatchingRow> {
   }
 
   void _resumeWatching(WatchProgress item) {
-    // Create a Movie object from the watch progress item
     final movie = Movie(
       id: item.contentId,
       title: item.displayTitle,
     );
+
+    // Convert stored ticks back to a Duration so the player can seek on start
+    final resumePosition = item.positionTicks > 0
+        ? Duration(microseconds: item.positionTicks ~/ 10)
+        : null;
 
     Navigator.push(
       context,
@@ -58,9 +62,10 @@ class _ContinueWatchingRowState extends State<ContinueWatchingRow> {
         builder: (_) => UniversalPlayerScreen(
           movie: movie,
           streamUrl: widget.apiService.getStreamUrl(item.contentId),
+          startPosition: resumePosition,
         ),
       ),
-    ).then((_) => _loadContinueWatching()); // Refresh on return
+    ).then((_) => _loadContinueWatching());
   }
 
   @override
@@ -117,11 +122,11 @@ class _ContinueWatchingRowState extends State<ContinueWatchingRow> {
                   );
                   _loadContinueWatching();
                 },
-                imageUrl: _continueWatchingItems[index].posterUrl != null
-                    ? widget.apiService.getImageUrl(
-                        _continueWatchingItems[index].contentId,
-                      )
-                    : '',
+                // Always derive the image URL from the content ID — the
+                // posterUrl field is metadata only; the actual URL is built
+                // server-side from the ID.
+                imageUrl: widget.apiService
+                    .getImageUrl(_continueWatchingItems[index].contentId),
               );
             },
           ),
