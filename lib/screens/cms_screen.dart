@@ -441,7 +441,7 @@ class _CmsListTile extends StatelessWidget {
                   ),
                   if (hasOverride) ...[
                     const SizedBox(height: 5),
-                    _OverrideSummary(override: override!),
+                    _OverrideSummary(cmsOverride: override!),
                   ],
                 ],
               ),
@@ -514,17 +514,17 @@ class _BadgeChip extends StatelessWidget {
 }
 
 class _OverrideSummary extends StatelessWidget {
-  final CmsOverride override;
-  const _OverrideSummary({required this.override});
+  final CmsOverride cmsOverride;
+  const _OverrideSummary({required this.cmsOverride});
 
   @override
   Widget build(BuildContext context) {
     final parts = <String>[];
-    if (override.customPosterUrl?.isNotEmpty == true) parts.add('Poster');
-    if (override.customBackdropUrl?.isNotEmpty == true) parts.add('Backdrop');
-    if (override.customTitle?.isNotEmpty == true) parts.add('Title');
-    if (override.customDescription?.isNotEmpty == true) parts.add('Desc');
-    if (override.badgeLabel?.isNotEmpty == true) parts.add('Badge');
+    if (cmsOverride.customPosterUrl?.isNotEmpty == true) parts.add('Poster');
+    if (cmsOverride.customBackdropUrl?.isNotEmpty == true) parts.add('Backdrop');
+    if (cmsOverride.customTitle?.isNotEmpty == true) parts.add('Title');
+    if (cmsOverride.customDescription?.isNotEmpty == true) parts.add('Desc');
+    if (cmsOverride.badgeLabel?.isNotEmpty == true) parts.add('Badge');
 
     return Row(
       children: [
