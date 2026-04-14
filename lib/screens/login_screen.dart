@@ -541,17 +541,19 @@ class _ScrollingPostersBackgroundState
           margin: EdgeInsets.all(ThemeConfig.spacingXS),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(ThemeConfig.radiusM),
-            child: Image.network(
-              items[index],
-              fit: BoxFit.cover,
-              height: 280,
-              errorBuilder: (_, __, ___) => Container(
-                height: 280,
-                color: ThemeConfig.surface,
-                child: Icon(
-                  Icons.movie,
-                  size: 50,
-                  color: ThemeConfig.textSecondary.withValues(alpha: 0.3),
+            // 2:3 is the standard movie-poster ratio (width : height)
+            child: AspectRatio(
+              aspectRatio: 2 / 3,
+              child: Image.network(
+                items[index],
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: ThemeConfig.surface,
+                  child: Icon(
+                    Icons.movie,
+                    size: 50,
+                    color: ThemeConfig.textSecondary.withValues(alpha: 0.3),
+                  ),
                 ),
               ),
             ),
