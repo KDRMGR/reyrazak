@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reyrazak/config/app_config.dart';
@@ -111,9 +112,18 @@ class _LoginScreenState extends State<LoginScreen>
           // 3-Column Scrolling Posters Background
           const _ScrollingPostersBackground(),
 
-          // Dark overlay for better text readability
+          // Subtle vignette so the card stands out from the posters
           Container(
-            color: Colors.black.withValues(alpha: 0.4),
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 1.4,
+                colors: [
+                  Colors.black.withValues(alpha: 0.15),
+                  Colors.black.withValues(alpha: 0.65),
+                ],
+              ),
+            ),
           ),
 
           // Login Form Card
@@ -131,248 +141,427 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildLoginCard(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final cardWidth = width < 600
-        ? width * 0.9
-        : width < 900
-            ? 450.0
-            : 500.0;
-
-    return Container(
-      width: cardWidth,
-      constraints: const BoxConstraints(maxWidth: 500),
-      margin: EdgeInsets.all(ThemeConfig.spacingL),
-      padding: EdgeInsets.all(ThemeConfig.spacingXL),
-      decoration: BoxDecoration(
-        color: ThemeConfig.surface.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(ThemeConfig.radiusXL),
-        border: Border.all(
-          color: ThemeConfig.textSecondary.withValues(alpha: 0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-          ),
-        ],
+  // ── Shared field decoration ──────────────────────────────────────────────
+  InputDecoration _fieldDecor({
+    required String label,
+    required IconData icon,
+    Widget? suffix,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(
+        color: Colors.white.withValues(alpha: 0.45),
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
       ),
-      child: Consumer<AuthService>(
-        builder: (context, authService, child) {
-          return Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // App Logo/Icon
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        ThemeConfig.primary,
-                        ThemeConfig.primary.withValues(alpha: 0.7),
+      floatingLabelStyle: TextStyle(
+        color: ThemeConfig.primary,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      ),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Icon(icon, color: Colors.white.withValues(alpha: 0.35), size: 20),
+      ),
+      suffixIcon: suffix,
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.06),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide:
+            BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide:
+            BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: ThemeConfig.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide:
+            const BorderSide(color: Colors.redAccent, width: 1),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide:
+            const BorderSide(color: Colors.redAccent, width: 1.5),
+      ),
+      errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 12),
+    );
+  }
+
+  Widget _buildLoginCard(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = screenWidth < 600
+        ? screenWidth * 0.88
+        : screenWidth < 900
+            ? 420.0
+            : 460.0;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        // Real frosted-glass blur over the scrolling poster background
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          width: cardWidth,
+          constraints: const BoxConstraints(maxWidth: 460),
+          padding: const EdgeInsets.fromLTRB(32, 36, 32, 28),
+          decoration: BoxDecoration(
+            // Deep translucent surface — darker than before so the
+            // blur effect is clearly visible
+            color: Colors.black.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.6),
+                blurRadius: 60,
+                offset: const Offset(0, 24),
+              ),
+              BoxShadow(
+                color: ThemeConfig.primary.withValues(alpha: 0.08),
+                blurRadius: 80,
+                spreadRadius: -10,
+              ),
+            ],
+          ),
+          child: Consumer<AuthService>(
+            builder: (context, authService, _) {
+              return Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Logo + wordmark ───────────────────────────────
+                    Center(
+                      child: Column(
+                        children: [
+                          // Layered glow rings + play icon
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Outer glow ring
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: ThemeConfig.primary
+                                          .withValues(alpha: 0.25),
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                                // Inner gradient disc
+                                Container(
+                                  width: 62,
+                                  height: 62,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        ThemeConfig.primary,
+                                        ThemeConfig.primary
+                                            .withValues(alpha: 0.7),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: ThemeConfig.primary
+                                            .withValues(alpha: 0.5),
+                                        blurRadius: 24,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.play_arrow_rounded,
+                                    color: Colors.white,
+                                    size: 34,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // App name
+                          Text(
+                            AppConstants.appName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          // Tagline
+                          Text(
+                            'Stream everything. Anywhere.',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // ── Thin accent divider ───────────────────────────
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            ThemeConfig.primary.withValues(alpha: 0.5),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // ── Section label ─────────────────────────────────
+                    Text(
+                      'SIGN IN',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.35),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 2,
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Username field ────────────────────────────────
+                    TextFormField(
+                      controller: _usernameController,
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 15),
+                      decoration: _fieldDecor(
+                        label: 'Username',
+                        icon: Icons.person_outline_rounded,
+                      ),
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Required' : null,
+                      onFieldSubmitted: (_) => _handleLogin(),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // ── Password field ────────────────────────────────
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 15),
+                      decoration: _fieldDecor(
+                        label: 'Password',
+                        icon: Icons.lock_outline_rounded,
+                        suffix: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: Colors.white.withValues(alpha: 0.35),
+                            size: 20,
+                          ),
+                          onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Required' : null,
+                      onFieldSubmitted: (_) => _handleLogin(),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // ── Remember me + Forgot password ─────────────────
+                    Row(
+                      children: [
+                        Transform.scale(
+                          scale: 0.9,
+                          child: Switch(
+                            value: _rememberMe,
+                            onChanged: (v) =>
+                                setState(() => _rememberMe = v),
+                            activeColor: ThemeConfig.primary,
+                            inactiveTrackColor:
+                                Colors.white.withValues(alpha: 0.12),
+                            inactiveThumbColor:
+                                Colors.white.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        Text(
+                          'Remember me',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.55),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () {},
+                          child: Text(
+                            'Forgot password?',
+                            style: TextStyle(
+                              color: ThemeConfig.primary
+                                  .withValues(alpha: 0.85),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: ThemeConfig.primary.withValues(alpha: 0.5),
-                        blurRadius: 20,
+
+                    const SizedBox(height: 20),
+
+                    // ── Error banner ──────────────────────────────────
+                    if (authService.errorMessage != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                Colors.redAccent.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline_rounded,
+                                color: Colors.redAccent, size: 18),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                authService.errorMessage!,
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(height: 16),
                     ],
-                  ),
-                  child: Icon(
-                    Icons.play_circle_filled,
-                    size: 50,
-                    color: Colors.white,
-                  ),
-                ),
 
-                SizedBox(height: ThemeConfig.spacingL),
-
-                // App Name
-                Text(
-                  AppConstants.appName,
-                  style: ThemeConfig.heading1.copyWith(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                SizedBox(height: ThemeConfig.spacingS),
-
-                Text(
-                  'Sign in to continue',
-                  style: ThemeConfig.bodyMedium.copyWith(
-                    color: ThemeConfig.textSecondary,
-                  ),
-                ),
-
-                SizedBox(height: ThemeConfig.spacingXL),
-
-                // Username Field
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: Icon(Icons.person_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(ThemeConfig.radiusM),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your username';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _handleLogin(),
-                ),
-
-                SizedBox(height: ThemeConfig.spacingM),
-
-                // Password Field
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                    // ── Sign-in button ────────────────────────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: authService.isLoading
+                              ? null
+                              : LinearGradient(
+                                  colors: [
+                                    ThemeConfig.primary,
+                                    ThemeConfig.primary
+                                        .withValues(alpha: 0.75),
+                                  ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                          color: authService.isLoading
+                              ? ThemeConfig.primary.withValues(alpha: 0.4)
+                              : null,
+                          boxShadow: authService.isLoading
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: ThemeConfig.primary
+                                        .withValues(alpha: 0.45),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed:
+                              authService.isLoading ? null : _handleLogin,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: authService.isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    valueColor:
+                                        AlwaysStoppedAnimation(Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                        ),
                       ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(ThemeConfig.radiusM),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _handleLogin(),
-                ),
 
-                SizedBox(height: ThemeConfig.spacingM),
+                    const SizedBox(height: 24),
 
-                // Remember Me & Forgot Password
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _rememberMe,
-                      onChanged: (value) {
-                        setState(() => _rememberMe = value ?? false);
-                      },
-                      activeColor: ThemeConfig.primary,
-                    ),
-                    Text(
-                      'Remember me',
-                      style: ThemeConfig.bodyMedium,
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: Implement forgot password
-                      },
+                    // ── Version ───────────────────────────────────────
+                    Center(
                       child: Text(
-                        'Forgot password?',
-                        style: ThemeConfig.bodyMedium.copyWith(
-                          color: ThemeConfig.primary,
+                        'v${AppConstants.appVersion}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          fontSize: 11,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
                   ],
                 ),
-
-                SizedBox(height: ThemeConfig.spacingL),
-
-                // Error Message
-                if (authService.errorMessage != null)
-                  Container(
-                    padding: EdgeInsets.all(ThemeConfig.spacingM),
-                    margin: EdgeInsets.only(bottom: ThemeConfig.spacingM),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(ThemeConfig.radiusM),
-                      border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red, size: 20),
-                        SizedBox(width: ThemeConfig.spacingS),
-                        Expanded(
-                          child: Text(
-                            authService.errorMessage!,
-                            style: ThemeConfig.bodySmall.copyWith(
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Login Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: authService.isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ThemeConfig.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(ThemeConfig.radiusM),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: authService.isLoading
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Text(
-                            'Sign In',
-                            style: ThemeConfig.bodyLarge.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ),
-
-                SizedBox(height: ThemeConfig.spacingL),
-
-                // Version Info
-                Text(
-                  'Version ${AppConstants.appVersion}',
-                  style: ThemeConfig.caption.copyWith(
-                    color: ThemeConfig.textSecondary.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
     );
   }

@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/movie.dart';
 import '../services/api_service.dart';
+import '../services/cms_service.dart';
 
 class ContentProvider extends ChangeNotifier {
   final ApiService _apiService;
+  CmsService? _cms;
   List<Movie> _movies = [];
   List<Movie> _shows = [];
   List<Movie> _musicVideos = [];
@@ -11,7 +13,12 @@ class ContentProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
-  ContentProvider(this._apiService);
+  ContentProvider(this._apiService, [this._cms]);
+
+  void setCmsService(CmsService cms) {
+    _cms = cms;
+    notifyListeners();
+  }
 
   List<Movie> get movies => _movies;
   List<Movie> get shows => _shows;
@@ -77,7 +84,15 @@ class ContentProvider extends ChangeNotifier {
     }
   }
 
-  String getImageUrl(String itemId) => _apiService.getImageUrl(itemId);
-  String getBackdropUrl(String itemId) => _apiService.getBackdropUrl(itemId);
+  String getImageUrl(String itemId) {
+    final fallback = _apiService.getImageUrl(itemId);
+    return _cms?.effectivePosterUrl(itemId, fallback) ?? fallback;
+  }
+
+  String getBackdropUrl(String itemId) {
+    final fallback = _apiService.getBackdropUrl(itemId);
+    return _cms?.effectiveBackdropUrl(itemId, fallback) ?? fallback;
+  }
+
   String getStreamUrl(String itemId) => _apiService.getStreamUrl(itemId);
 }

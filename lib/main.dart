@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:reyrazak/config/app_config.dart';
 import 'services/auth_service.dart';
+import 'services/cms_service.dart';
 import 'providers/movie_provider.dart';
 import 'providers/content_provider.dart';
 import 'screens/login_screen.dart';
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()..initialize()),
+        ChangeNotifierProvider(create: (_) => CmsService()..initialize()),
         ChangeNotifierProxyProvider<AuthService, MovieProvider>(
           create: (context) => MovieProvider(
             Provider.of<AuthService>(context, listen: false).apiService,
@@ -35,12 +37,17 @@ class MyApp extends StatelessWidget {
           update: (context, authService, previous) =>
               previous ?? MovieProvider(authService.apiService),
         ),
-        ChangeNotifierProxyProvider<AuthService, ContentProvider>(
+        ChangeNotifierProxyProvider2<AuthService, CmsService, ContentProvider>(
           create: (context) => ContentProvider(
             Provider.of<AuthService>(context, listen: false).apiService,
+            Provider.of<CmsService>(context, listen: false),
           ),
-          update: (context, authService, previous) =>
-              previous ?? ContentProvider(authService.apiService),
+          update: (context, authService, cms, previous) {
+            final provider = previous ??
+                ContentProvider(authService.apiService, cms);
+            provider.setCmsService(cms);
+            return provider;
+          },
         ),
       ],
       child: MaterialApp(
