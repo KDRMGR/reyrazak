@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reyrazak/config/app_config.dart';
@@ -378,6 +379,10 @@ class _LoginScreenState extends State<LoginScreen>
 }
 
 /// 3-Column Scrolling Posters Background
+///
+/// Each visit the master poster pool is shuffled and split evenly across the
+/// three columns, and each column jumps to a random starting offset — so no
+/// two logins look the same.
 class _ScrollingPostersBackground extends StatefulWidget {
   const _ScrollingPostersBackground();
 
@@ -387,94 +392,119 @@ class _ScrollingPostersBackground extends StatefulWidget {
 }
 
 class _ScrollingPostersBackgroundState
-    extends State<_ScrollingPostersBackground>
-    with TickerProviderStateMixin {
+    extends State<_ScrollingPostersBackground> {
   late ScrollController _leftController;
   late ScrollController _middleController;
   late ScrollController _rightController;
   late Timer _scrollTimer;
 
-  // Movie/TV poster URLs (using high-quality TMDB posters)
-  final List<String> _leftPosters = [
-    'https://image.tmdb.org/t/p/original/3bhkrj58Vtu7enYsRolD1fZdja1.jpg', // Avengers
-    'https://image.tmdb.org/t/p/original/qJ2tW6WMUDux911r6m7haRef0WH.jpg', // The Matrix
-    'https://image.tmdb.org/t/p/original/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg', // Inception
-    'https://image.tmdb.org/t/p/original/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg', // The Shawshank Redemption
-    'https://image.tmdb.org/t/p/original/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg', // The Lord of the Rings
+  // The full poster pool — 36 unique entries shuffled fresh on every login.
+  // Using TMDB w500 thumbnails (smaller, faster, more reliable than /original).
+  static const String _base = 'https://image.tmdb.org/t/p/w500';
+  static const List<String> _masterPool = [
+    // — Action / Sci-Fi ——————————————————————————————
+    '$_base/3bhkrj58Vtu7enYsRolD1fZdja1.jpg', // Avengers: Infinity War
+    '$_base/or06FN3Dka5tukK1e9sl16pB3iy.jpg',  // Avengers: Endgame
+    '$_base/qJ2tW6WMUDux911r6m7haRef0WH.jpg',  // The Matrix
+    '$_base/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg',  // Inception
+    '$_base/vzmL6fP7aPKNKPRTFnZmiUfciyV.jpg',  // Interstellar
+    '$_base/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg',  // Oppenheimer
+    '$_base/tnAuB8sAhnAsbV6JCDT6xD4u7jz.jpg',  // Tenet
+    '$_base/AkJQpZp9WoNdj7pLYSj1L0RcMMN.jpg',  // The Batman
+    '$_base/6DrHO1jr3qVrViUO6s6kFiAGM7.jpg',   // Dune: Part One
+    '$_base/d5NXSklpcvkCgnTG7TL8T9XSMWX.jpg',  // John Wick
+    // — Drama / Thriller ——————————————————————————————
+    '$_base/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg',  // The Shawshank Redemption
+    '$_base/qNBAXBIQlnOThrVvA6mA2B5ggV6.jpg',  // The Godfather
+    '$_base/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',  // Pulp Fiction
+    '$_base/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg',  // Fight Club
+    '$_base/faXT8V80JRhnArTAeYXz0Eutpv9.jpg',  // Forrest Gump
+    '$_base/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg',  // Titanic
+    '$_base/lxD5ak7BOoinRNehOCA85CQ8ubr.jpg',  // The Prestige
+    '$_base/kqjL17yufvn9OVLyXYpvtyrFfak.jpg',  // 1917
+    // — Superhero ————————————————————————————————————
+    '$_base/xBHvZcjRiWyobQ9kxBhO6B2dtRI.jpg',  // The Dark Knight
+    '$_base/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg',  // Joker
+    '$_base/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg',  // Spider-Man: No Way Home
+    '$_base/uxzzxijgPIY7slzFvMotPv8wjKA.jpg',  // Black Panther
+    '$_base/e1mjopzAS2KNsvpbpahQ1a6SkSn.jpg',  // Captain America: Civil War
+    '$_base/imekS7f1OuHyUP2LAiTEM0zBzUz.jpg',  // Wonder Woman
+    '$_base/r7vmZjiyZw9rpJMQJdXpjgiCOk9.jpg',  // Guardians of the Galaxy
+    '$_base/uGBVj3bEbCoZbDjjl9wTxcygko1.jpg',  // Doctor Strange
+    // — TV Series ————————————————————————————————————
+    '$_base/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg',  // The Lord of the Rings (series)
+    '$_base/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg',  // Game of Thrones
+    '$_base/49WJfeN0moxb9IPfGn8AIqMGskD.jpg',  // Stranger Things
+    '$_base/cZ0d3rtvXPVc6TKbPnkO6rKVHCb.jpg',  // The Witcher
+    '$_base/reEMJA1uzscCbkpeRJeTT2bjqUp.jpg',  // Money Heist
+    '$_base/sWgBv7LV2PRoQgkxwlibLycgKAK.jpg',  // The Mandalorian
+    '$_base/kEl2t3OhXc3Zb9FBh1AuYzRTgZp.jpg',  // Loki
+    '$_base/stTEycfG9928HYGEISBFaG1ngjM.jpg',  // The Boys
+    '$_base/vUUqzWa2LnHIVqkaKVn3nyfYBNQ.jpg',  // Peaky Blinders
+    '$_base/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',   // Breaking Bad
   ];
 
-  final List<String> _middlePosters = [
-    'https://image.tmdb.org/t/p/original/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg', // Joker
-    'https://image.tmdb.org/t/p/original/xBHvZcjRiWyobQ9kxBhO6B2dtRI.jpg', // The Dark Knight
-    'https://image.tmdb.org/t/p/original/vzmL6fP7aPKNKPRTFnZmiUfciyV.jpg', // Interstellar
-    'https://image.tmdb.org/t/p/original/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg', // Oppenheimer
-    'https://image.tmdb.org/t/p/original/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', // Pulp Fiction
-  ];
-
-  final List<String> _rightPosters = [
-    'https://image.tmdb.org/t/p/original/qNBAXBIQlnOThrVvA6mA2B5ggV6.jpg', // The Godfather
-    'https://image.tmdb.org/t/p/original/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg', // Fight Club
-    'https://image.tmdb.org/t/p/original/faXT8V80JRhnArTAeYXz0Eutpv9.jpg', // Forrest Gump
-    'https://image.tmdb.org/t/p/original/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg', // Titanic
-    'https://image.tmdb.org/t/p/original/lxD5ak7BOoinRNehOCA85CQ8ubr.jpg', // The Prestige
-  ];
+  // Per-column poster lists — filled in initState after shuffling
+  late List<String> _leftPosters;
+  late List<String> _middlePosters;
+  late List<String> _rightPosters;
 
   @override
   void initState() {
     super.initState();
-    _initializeScrollControllers();
+    _buildShuffledColumns();
+    _initControllers();
     _startAutoScroll();
   }
 
-  void _initializeScrollControllers() {
-    _leftController = ScrollController();
-    _middleController = ScrollController();
-    _rightController = ScrollController();
+  /// Shuffle the master pool and divide evenly across the three columns.
+  void _buildShuffledColumns() {
+    final rng = Random();
+    final shuffled = List<String>.from(_masterPool)..shuffle(rng);
+
+    // Ensure each column has exactly 12 items (36 total)
+    const perCol = 12;
+    _leftPosters   = shuffled.sublist(0, perCol);
+    _middlePosters = shuffled.sublist(perCol, perCol * 2);
+    _rightPosters  = shuffled.sublist(perCol * 2, perCol * 3);
   }
 
-  void _startAutoScroll() {
-    // Scroll every 50ms for smooth animation
-    _scrollTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      if (!mounted) return;
+  void _initControllers() {
+    _leftController   = ScrollController();
+    _middleController = ScrollController();
+    _rightController  = ScrollController();
 
-      // Left column: scroll down
-      if (_leftController.hasClients) {
-        final maxScroll = _leftController.position.maxScrollExtent;
-        final currentScroll = _leftController.offset;
-        final nextScroll = currentScroll + 1.0;
-
-        if (nextScroll >= maxScroll) {
-          _leftController.jumpTo(0);
-        } else {
-          _leftController.jumpTo(nextScroll);
-        }
-      }
-
-      // Middle column: scroll up
-      if (_middleController.hasClients) {
-        final currentScroll = _middleController.offset;
-        final nextScroll = currentScroll - 1.0;
-
-        if (nextScroll <= 0) {
-          _middleController.jumpTo(_middleController.position.maxScrollExtent);
-        } else {
-          _middleController.jumpTo(nextScroll);
-        }
-      }
-
-      // Right column: scroll down
-      if (_rightController.hasClients) {
-        final maxScroll = _rightController.position.maxScrollExtent;
-        final currentScroll = _rightController.offset;
-        final nextScroll = currentScroll + 1.0;
-
-        if (nextScroll >= maxScroll) {
-          _rightController.jumpTo(0);
-        } else {
-          _rightController.jumpTo(nextScroll);
+    // Jump each column to a random starting offset so they begin at
+    // completely different positions on every login.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final rng = Random();
+      for (final ctrl in [_leftController, _middleController, _rightController]) {
+        if (ctrl.hasClients && ctrl.position.maxScrollExtent > 0) {
+          ctrl.jumpTo(rng.nextDouble() * ctrl.position.maxScrollExtent);
         }
       }
     });
+  }
+
+  void _startAutoScroll() {
+    _scrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+      if (!mounted) return;
+      _step(_leftController,   direction: 1);   // down
+      _step(_middleController, direction: -1);  // up
+      _step(_rightController,  direction: 1);   // down
+    });
+  }
+
+  void _step(ScrollController ctrl, {required int direction}) {
+    if (!ctrl.hasClients) return;
+    final max  = ctrl.position.maxScrollExtent;
+    final next = ctrl.offset + direction * 1.0;
+
+    if (direction > 0) {
+      ctrl.jumpTo(next >= max ? 0 : next);
+    } else {
+      ctrl.jumpTo(next <= 0 ? max : next);
+    }
   }
 
   @override
@@ -490,50 +520,40 @@ class _ScrollingPostersBackgroundState
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Left Column (scrolling down)
-        Expanded(
-          child: _buildPosterColumn(_leftController, _leftPosters),
-        ),
-        // Middle Column (scrolling up)
-        Expanded(
-          child: _buildPosterColumn(_middleController, _middlePosters),
-        ),
-        // Right Column (scrolling down)
-        Expanded(
-          child: _buildPosterColumn(_rightController, _rightPosters),
-        ),
+        Expanded(child: _buildColumn(_leftController,   _leftPosters)),
+        Expanded(child: _buildColumn(_middleController, _middlePosters)),
+        Expanded(child: _buildColumn(_rightController,  _rightPosters)),
       ],
     );
   }
 
-  Widget _buildPosterColumn(ScrollController controller, List<String> posters) {
-    // Duplicate posters for infinite scroll effect
-    final infinitePosters = [...posters, ...posters, ...posters];
+  Widget _buildColumn(ScrollController controller, List<String> posters) {
+    // Duplicate once — 24 items is enough to fill any screen height without
+    // a visible seam, and far less repetition than the old 5×3 approach.
+    final items = [...posters, ...posters];
 
     return ListView.builder(
       controller: controller,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: infinitePosters.length,
+      itemCount: items.length,
       itemBuilder: (context, index) {
         return Container(
           margin: EdgeInsets.all(ThemeConfig.spacingXS),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(ThemeConfig.radiusM),
             child: Image.network(
-              infinitePosters[index],
+              items[index],
               fit: BoxFit.cover,
-              height: 300,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 300,
-                  color: ThemeConfig.surface,
-                  child: Icon(
-                    Icons.movie,
-                    size: 50,
-                    color: ThemeConfig.textSecondary.withValues(alpha: 0.3),
-                  ),
-                );
-              },
+              height: 280,
+              errorBuilder: (_, __, ___) => Container(
+                height: 280,
+                color: ThemeConfig.surface,
+                child: Icon(
+                  Icons.movie,
+                  size: 50,
+                  color: ThemeConfig.textSecondary.withValues(alpha: 0.3),
+                ),
+              ),
             ),
           ),
         );
