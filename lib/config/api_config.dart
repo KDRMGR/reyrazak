@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 /// API and Network Configuration
 ///
 /// Centralized configuration for all API-related settings including
@@ -7,9 +9,13 @@ class ApiConfig {
   // Base Configuration
   // ============================================================================
 
-  /// Base URL for the API server
-  /// Change this to point to different environments (dev/staging/prod)
-  static const String baseUrl = 'https://media.aplayworld.in';
+  /// Direct server URL — used on native platforms and as the Vercel proxy target.
+  static const String serverUrl = 'https://media.aplayworld.in';
+
+  /// On Flutter web, requests go through Vercel's /api-proxy rewrite so the
+  /// browser never talks directly to the media server (avoids CORS preflight).
+  /// On native platforms the server is hit directly.
+  static String get baseUrl => kIsWeb ? '' : serverUrl;
 
   /// API version (if applicable)
   static const String apiVersion = 'v1';
@@ -166,9 +172,12 @@ class ApiConfig {
   // Helper Methods
   // ============================================================================
 
-  /// Constructs full URL from endpoint
-  static String fullUrl(String endpoint) => '$baseUrl$endpoint';
+  /// Constructs full URL from endpoint.
+  /// On web, routes through the Vercel /api-proxy rewrite (same origin → no CORS).
+  /// On native, prepends the server URL directly.
+  static String fullUrl(String endpoint) =>
+      kIsWeb ? '/api-proxy$endpoint' : '$serverUrl$endpoint';
 
-  /// Checks if URL is from the configured base URL
-  static bool isValidBaseUrl(String url) => url.startsWith(baseUrl);
+  /// Checks if URL is from the configured server
+  static bool isValidBaseUrl(String url) => url.startsWith(serverUrl);
 }

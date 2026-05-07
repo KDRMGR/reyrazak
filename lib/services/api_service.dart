@@ -5,14 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:reyrazak/config/app_config.dart';
 
 class ApiService {
-  static String get baseUrl => ApiConfig.baseUrl;
-  static final Uri baseUri = () {
-    assert(baseUrl == baseUrl.trim());
-    assert(!baseUrl.contains('`'));
-    final uri = Uri.parse(baseUrl);
-    assert(uri.scheme == 'https');
-    return uri;
-  }();
+  static String get baseUrl => ApiConfig.serverUrl;
+  static final Uri baseUri = Uri.parse(ApiConfig.serverUrl);
 
   String? _accessToken;
 
@@ -178,7 +172,7 @@ class ApiService {
 
     try {
       // /Users/Me is a lightweight Emby/Jellyfin endpoint that requires auth
-      final url = Uri.parse('${ApiConfig.baseUrl}/Users/Me');
+      final url = Uri.parse(ApiConfig.fullUrl('/Users/Me'));
       final response = await http
           .get(url, headers: _getHeaders())
           .timeout(const Duration(seconds: 10));
